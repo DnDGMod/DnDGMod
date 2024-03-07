@@ -1,1 +1,2 @@
 mkdocs-autorefs
+pymdown-extensions
