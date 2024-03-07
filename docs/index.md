@@ -22,18 +22,14 @@ dndgmod init
 
 ### Using an Existing Mod
 1. Open the directory where mods are stored (`-p` opens the `p`arent directory of the mods):<br>
-    ```
-    dndgmod open -p
-    ```
+      dndgmod open -p
 2. Drag the mod's `.dndg` file into the opened `AppData` directory.
 (NOTE TO FUTURE SETH: .dndg is just .zip with a different name)
 3. [Recompile *Dungeons & Degenerate Gamblers*](#recompile-dungeons-degenerate-gamblers)
 
 ### Creating a New Mod
-1. Create a mod skeleton:<br>
-   ```
-   dndgmod create
-   ```
+1. Create a mod skeleton:
+      dndgmod create
 2. Edit the mod files... (NOTE TO FUTURE SETH: ADD DOCS FOR THIS PART)
 3. [Recompile *Dungeons & Degenerate Gamblers*](#recompile-dungeons-degenerate-gamblers)
 
