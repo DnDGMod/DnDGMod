@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "dndgmod"
+version = "0.1.1.post1"
+description = "A Dungeons & Degenerate Gamblers Modloader"
+authors = ["Seth Peace <sethevanpeace@gmail.com>"]
+readme = "README.md"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/TotallyNotSethP/DnDGMod"
+documentation = "https://dndgmod.rtfd.io"
+keywords = ["modding"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Topic :: Games/Entertainment :: Turn Based Strategy",
+    "Topic :: Software Development :: Disassemblers",
+    "Topic :: Software Development :: Build Tools",
+]
+
+[tool.poetry.scripts]
+dndgmod = "dndgmod.main:app"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+typer = {extras = ["all"], version = "^0.9.0"}
+pyyaml = "^6.0.1"
+appdirs = "^1.4.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
