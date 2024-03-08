@@ -16,6 +16,9 @@ def init(
             help="The URL to download a ZIP file containing the Windows version of GDRE Tools from"
         )] = "https://github.com/bruvzg/gdsdecomp/releases/download/v0.6.2/GDRE_tools-v0.6.2-windows.zip",
 ):
+    """Initialize DnDGMod and install dependencies
+
+    This will automatically download Godot 3.5.3 and GDRE Tools 0.6.2 to the DnDGMod AppData directory."""
     logger = ctx.obj["logger"]
     status_tracker = ProgressTracker(logger)
 

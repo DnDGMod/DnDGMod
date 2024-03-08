@@ -15,15 +15,15 @@ pip install dndgmod
 ## Quickstart
 ### Initialization
 Run this command to set up DnDGMod's `AppData` directory, install dependencies, and decompile your (locally stored) 
-*Dungeons and Degenerate Gamblers* executable:
+*Dungeons and Degenerate Gamblers* executable using GDRE Tools:
 ```
 dndgmod init
 ```
 
 ### Using an Existing Mod
-1. Open the directory where mods are stored (`-p` opens the `p`arent directory of the mods):
+1. Open the directory where mods are stored:
       ```
-      dndgmod open -p
+      dndgmod open
       ```
 2. Drag the mod's `.dndg` file into the opened `AppData` directory.
 (NOTE TO FUTURE SETH: .dndg is just .zip with a different name)
