@@ -8,7 +8,7 @@ import typer
 def decompile(
         ctx: typer.Context
 ):
-    """Decompile Dungeons & Degenerate Gamblers Modloader"""
+    """Decompile Dungeons & Degenerate Gamblers."""
     dndg_path = find_dndg()
     data_directory = ctx.obj["data_directory"]
     gdre_tools_path = data_directory / "dependencies" / "gdre_tools.exe"

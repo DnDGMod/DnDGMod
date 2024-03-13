@@ -7,7 +7,7 @@
 > Degenerate Gamblers* executables (modded or unmodded) or decompiled source code. Thank you, gamblers!
 
 ## Installation
-DnDGMod is available from [PyPI](https://pypi.org/project/dndgmod/):
+DnDGMod is available from [PyPI](https://pypi.org/project/dndgmod/) (Currently Windows-Only):
 ```
 pip install dndgmod
 ```
@@ -38,7 +38,7 @@ dndgmod init
 3. [Recompile *Dungeons & Degenerate Gamblers*](#recompile-dungeons-degenerate-gamblers)
 
 ### Recompile *Dungeons & Degenerate Gamblers*
-Run this command to recompile *Dungeons & Degenerate Gamblers* using Godot (which is auto-installed during 
+Run this command to recompile *Dungeons & Degenerate Gamblers* using Godot (which is automatically installed during 
 [Initialization](#initialization)):
 ```
 dndgmod compile

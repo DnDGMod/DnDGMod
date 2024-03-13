@@ -1,0 +1,8 @@
+{% macro on_event(event, body) %}
+func enact_{{ event }}_effect(cp, op, c):
+    current_player = cp
+    other_player = op
+    card = c
+    {{ body }}
+    emit_signal('{{ event }}_effect_completed')
+{% endmacro %}

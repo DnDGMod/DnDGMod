@@ -1,0 +1,14 @@
+{% macro _random_int(len) -%}
+    {% for n in range(len) -%}
+        {{- [0,1,2,3,4,5,6,7,8,9]|random }}
+    {%- endfor %}
+{%- endmacro %}
+{% macro wait_for(source, animation) %}
+{%- set function_id = _random_int(10) -%}
+{%- filter indent(width=4) %}
+{{ source }}.connect("{{ animation }}_completed", self, "_on_{{ animation }}_completed_{{ function_id }}")
+{{ caller() }}
+{% endfilter -%}
+func _on_{{ animation }}_completed_{{ function_id }}({# TODO: The arguments given here varies depending on what animation just played?!?! I may have to write some silly mapper function in python :/ #}):
+    {{ source }}.disconnect("{{ animation }}_completed", self, "_on_{{ animation }}_completed_{{ function_id }}")
+{% endmacro %}

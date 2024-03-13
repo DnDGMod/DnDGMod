@@ -11,8 +11,7 @@ def delete(
                                           prompt=True, confirmation_prompt=True)],
 ):
     """Delete an existing mod."""
-    mods_directory = ctx.obj["mods_directory"]
-    mod_directory = mods_directory / slug
+    mod_directory = ctx.obj["data_directory"] / "mods" / slug
     logger = ctx.obj["logger"]
 
     if not os.path.exists(mod_directory):

@@ -1,7 +1,7 @@
-from .subcommands import create, delete, open, init, decompile, compile
+from .subcommands import create, delete, open, init, decompile, compile, patch, revert
 from ._util.logger import logger_setup, LogLevels
 
-import pathlib
+from pathlib import Path
 from typing import Annotated
 
 import appdirs
@@ -21,8 +21,10 @@ app.command(epilog=EPILOG)(init.init)
 app.command(epilog=EPILOG)(decompile.decompile)
 app.command(epilog=EPILOG)(create.create)
 app.command("open", epilog=EPILOG)(open.open_)
+app.command(epilog=EPILOG)(patch.patch)
 app.command("compile", epilog=EPILOG)(compile.compile_)
 app.command(epilog=EPILOG)(delete.delete)
+app.command(epilog=EPILOG)(revert.revert)
 
 @app.callback()
 def dndgmod_callback(
@@ -35,7 +37,7 @@ def dndgmod_callback(
     Created by TotallyNotSeth in California with :heart:
     Check out our documentation at [link=https://dndgmod.rtfd.io]dndgmod.rtfd.io[/] for help getting started!
     """
-    data_directory = pathlib.Path(appdirs.user_data_dir("DnDGMod", "TotallyNotSeth")).resolve()
+    data_directory = Path(appdirs.user_data_dir("DnDGMod", "TotallyNotSeth")).resolve()
     if not (data_directory.exists() or ctx.invoked_subcommand == "init"):
         raise FileNotFoundError(f"Directory {data_directory} doesn't exist! Try running `dndgmod init`")
 

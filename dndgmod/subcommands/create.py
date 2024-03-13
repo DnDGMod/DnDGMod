@@ -30,7 +30,7 @@ def create(
         export_encounters: Annotated[bool, typer.Option(help="Generate files for creating custom encounters.",
                                                         rich_help_panel="Advanced Options")] = False,
         open_directory: Annotated[bool, typer.Option(help="Open the mod's directory in File Explorer after mod "
-                                                          "creation.", rich_help_panel="Advanced Options")] = True,
+                                                          "creation.", rich_help_panel="Behavior")] = True,
 ):
     """Create a blank mod."""
     mod_directory = ctx.obj["data_directory"] / "mods" / slug
@@ -42,19 +42,19 @@ def create(
     mod_directory.mkdir()
     logger.debug(f"Created mod {name} directory at {mod_directory}")
 
+    exports = []
+    if export_cards:
+        exports.append("cards")
+    if export_encounters:
+        exports.append("encounters")
+    data = {
+        "name": name,
+        "description": description,
+        "creator": creator,
+        "version": version,
+        "exports": exports,
+    }
     with open(mod_directory / "mod.yaml", "w") as f:
-        exports = []
-        if export_cards:
-            exports.append("cards")
-        if export_encounters:
-            exports.append("encounters")
-        data = {
-            "name": name,
-            "description": description,
-            "creator": creator,
-            "version": version,
-            "exports": exports,
-        }
         yaml.safe_dump(data, f, sort_keys=False)
     logger.debug(f"Created mod {name} properties file at {mod_directory / 'mod.yaml'}")
 
@@ -63,12 +63,14 @@ def create(
     os.mkdir(mod_directory / "src")
     logger.debug(f"Created mod {name} source code directory at {mod_directory / 'src'}")
 
-    with open(mod_directory / "cards.yaml", "w") as f:
-        f.write("# Add your cards here!")
-    logger.debug(f"Created mod {name} cards file at {mod_directory / 'cards.yaml'}")
-    with open(mod_directory / "encounters.yaml", "w") as f:
-        f.write("# Add your encounters here!")
-    logger.debug(f"Created mod {name} encounters file at {mod_directory / 'encounters.yaml'}")
+    if export_cards:
+        with open(mod_directory / "cards.yaml", "w") as f:
+            f.write("# Add your cards here!")
+        logger.debug(f"Created mod {name} cards file at {mod_directory / 'cards.yaml'}")
+    if export_encounters:
+        with open(mod_directory / "encounters.yaml", "w") as f:
+            f.write("# Add your encounters here!")
+        logger.debug(f"Created mod {name} encounters file at {mod_directory / 'encounters.yaml'}")
 
     logger.info(f"Mod {name} created at {mod_directory}")
     if open_directory:
