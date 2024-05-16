@@ -1,5 +1,5 @@
-from .subcommands import create, delete, open, init, decompile, compile, patch, revert
-from ._util.logger import logger_setup, LogLevels
+from .subcommands import create, delete, open, init, decompile, compile, patch, revert, cycle
+from .util.logger import logger_setup, LogLevels
 
 from pathlib import Path
 from typing import Annotated
@@ -25,6 +25,7 @@ app.command(epilog=EPILOG)(patch.patch)
 app.command("compile", epilog=EPILOG)(compile.compile_)
 app.command(epilog=EPILOG)(delete.delete)
 app.command(epilog=EPILOG)(revert.revert)
+app.command(epilog=EPILOG)(cycle.cycle)
 
 @app.callback()
 def dndgmod_callback(

@@ -1,7 +1,5 @@
 class ProgressTracker:
-    MULTIPLES = 20
-
-    def __init__(self, logger, multiples=MULTIPLES):
+    def __init__(self, logger, multiples=20):
         self.multiples = multiples
         self.last_step = -1
         self.logger = logger

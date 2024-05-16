@@ -1,4 +1,4 @@
-from .._util.progress import ProgressTracker
+from ..util.progress import ProgressTracker
 
 from typing import Annotated
 from urllib.request import urlretrieve

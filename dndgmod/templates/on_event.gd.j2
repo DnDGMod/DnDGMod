@@ -3,6 +3,6 @@ func enact_{{ event }}_effect(cp, op, c):
     current_player = cp
     other_player = op
     card = c
-    {{ body }}
+    {% filter indent(width=4) %}{{ body }}{% endfilter %}
     emit_signal('{{ event }}_effect_completed')
 {% endmacro %}

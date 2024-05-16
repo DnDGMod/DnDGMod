@@ -1,4 +1,4 @@
-from .._util.find import find_dndg
+from ..util.files import find_dndg
 from .decompile import decompile
 
 import shutil

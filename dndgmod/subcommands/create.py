@@ -1,4 +1,4 @@
-from .._util.slug import generate_slug
+from ..util.slug import generate_slug
 
 import os
 from typing import Annotated
