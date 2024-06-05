@@ -5,12 +5,12 @@ import jinja2
 import re
 
 class Spritesheet:
-    CARD_WIDTH, CARD_HEIGHT = 57, 89
+    CARD_WIDTH, CARD_HEIGHT = 58, 90
 
     def __init__(self, spritesheet_path: Path):
         self.spritesheet_path = spritesheet_path
         self.new_art = {}
-        self.j2 = jinja2.Environment(loader=jinja2.PackageLoader("dndgmod", "templates"), trim_blocks=True, lstrip_blocks=True)
+        self.j2 = jinja2.Environment(loader=jinja2.PackageLoader("dndgmod", "templates"))
         self.art_meta = []
 
     def add_art(self, id_: int, card_art_path: Path):
@@ -28,7 +28,7 @@ class Spritesheet:
         for id_, art_path in sorted(self.new_art.items(), key=lambda x: x[0]):
             with Image.open(art_path) as art:
                 new_spritesheet.paste(art, (current_x, current_y,
-                                            current_x + self.CARD_WIDTH - 1, current_y + self.CARD_HEIGHT - 1))
+                                            current_x + self.CARD_WIDTH, current_y + self.CARD_HEIGHT))
             self.art_meta.append((id_, (current_x, current_y)))
             current_x += self.CARD_WIDTH
             if current_x >= width:

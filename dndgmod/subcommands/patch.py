@@ -8,7 +8,7 @@ import typer
 
 from ..util.spritesheet import Spritesheet
 
-FIRST_CARD = 222
+FIRST_CARD = 274
 
 class InvalidConfigurationError(Exception):
     pass
@@ -16,7 +16,7 @@ class InvalidConfigurationError(Exception):
 def clean_dict(dictionary):
     to_return = dict()
     for key, value in dictionary.items():
-        key = key.lower().strip()
+        key = key.lower().strip().replace(" ", "_")
         if type(value) is dict:
             value = clean_dict(value)
         to_return[key] = value
@@ -37,11 +37,11 @@ def patch(
     ss = Spritesheet(decompiled_src / "assets" / "art" / "card_sprite_sheet.png")
 
     for mod in mods:
-        j2 = jinja2.Environment(loader=jinja2.FileSystemLoader(mod / "src"), trim_blocks=True, lstrip_blocks=True)
+        j2 = jinja2.Environment(loader=jinja2.BaseLoader())
         j2.globals["wait_for"] = builtin_templates.get_template("wait_for.gd.j2").module.wait_for
 
         with open(mod / "mod.yaml") as f:
-            metadata = yaml.safe_load(f)
+            metadata = clean_dict(yaml.safe_load(f))
         if metadata["exports"] != ["cards"]:
             raise InvalidConfigurationError("During the alpha phase, mods can only export cards")
         logger.info(f"Loaded \"{metadata['name']}\" configuration")
@@ -54,7 +54,9 @@ def patch(
             events = []
 
             for trigger, source in card_data["triggers"].items():
-                events.append((trigger, j2.get_template(source).render()))
+                with open(mod / "src" / source) as f:
+                    template = f.read().replace("\n", "\n    ")
+                events.append((trigger, j2.from_string(template).render()))
             on_event = builtin_templates.get_template("on_event.gd.j2").module.on_event
             with open(effect_resources / f"CardEffect{card_number}.gd", "w") as f:
                 f.write(builtin_templates.get_template("CardEffectXXX.gd.j2").render(events=events, on_event=on_event))
@@ -64,8 +66,11 @@ def patch(
                 card_list_contents = f.read()
             with open(card_list, "w") as f:
                 entry = (builtin_templates.get_template("card_list_entry.j2")
-                         .render(name=name, value=card_data["value"], id=card_number,
-                                 description=card_data["description"]))
+                         .render(name=name, value=card_data["value"], suit=card_data.get("suit", "special"),
+                                 id=card_number, description=card_data["description"],
+                                 attributes=card_data.get("attributes", ["REWARD"]),
+                                 collection_entry=42000 + card_number,
+                                 keywords=card_data.get("keywords", None)))
                 card_list_contents = "},\n}".join(card_list_contents.rsplit("}\n}", 1))
                 card_list_contents = entry.join(card_list_contents.rsplit("}", 1))
                 f.write(card_list_contents + "\n}")

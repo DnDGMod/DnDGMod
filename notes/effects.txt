@@ -1,0 +1,25 @@
+example with `play_effect`:
+  in header:
+    ```
+    signal play_effect_completed
+    var effects_list = ['play_effect']
+    ```
+  in script:
+    ```
+    func enact_play_effect(current_player, other_player, card):
+      CODE GOES HERE
+      emit_signal('play_effect_completed')
+    ```
+    current_player is the player who played the card
+    other_player is the opponent of the current player
+    card is the card that was played
+
+All effects:
+  play_effect
+  clicked_effect
+  bust_limit_exceeded_effect
+  stand_effect (emit_signal requires argument, see CardEffect143.gd)
+  start_of_turn_effect
+  sleeve_played_effect (check CardEffect152.gd to study further)
+  another_card_drawn_effect (only argument is card)
+  card_instanced_effect (no corresponding signal, only argument is card)

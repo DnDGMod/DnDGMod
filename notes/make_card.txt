@@ -1,0 +1,40 @@
+How to add a card:
+1. Append basic info to the dictionary at the end of 'singletons/CardList.gd'
+```
+"unique id number":{
+  "name":"...",
+  "suit":"...",
+  "value":...,
+  "attributes":[REWARD],
+  "description":"..."
+}
+```
+suit can be hearts, diamonds, clubs, spades, special, all_suits_at_once
+multiple attributes can be used at once, pick from these options:
+ * REWARD (card can be offered as reward between rounds)
+ * STANDARD (card is from one of the 4 starter decks)
+ * NEGATIVE_STANDARD (card is negative version of a STANDARD card)
+ * UNOBTAINABLE (card is only used in other cards' effects, never a permanent part of a deck)
+ * TAROT (card can be offered in tarot reading encounter)
+ * JACK
+ * QUEEN
+ * KING
+ * ACE
+
+2. Create 'card_effect_resources/card_effect_[id].tres' with the exact contents:
+```
+[gd_resource type="Resource" load_steps=2 format=2]
+
+[ext_resource path="res://card_effect_resources/CardEffect[id].gd" type="Script" id=1]
+
+[resource]
+script = ExtResource( 1 )
+```
+(replace [id] with the unique id number)
+
+3. Create 'card_effect_resources/CardEffect[id].gd' with the header:
+```
+extends Resource
+signal [...]
+var effects_list = [...]
+```

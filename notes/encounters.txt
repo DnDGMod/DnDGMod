@@ -1,0 +1,20 @@
+singletons/RoomList.gd starts with enums:
+
+var [Area]Rooms = {
+    ENCOUNTER_[CHARACTER] = "[area]_encounter_[character]"
+}
+
+Line 100 has the `[area]_easy_random_encounters` and `[area]_hard_random_encounters`. They are each a list of encounters from the Enum
+
+Line 174 has the `room_dictionary.` Entries look like this:
+[Area]Rooms.ENCOUNTER_[CHARACTER]: {
+    "name": "...",
+    "type": "opponent",
+    "sprite": [x,y],  # presumably coordinates for a spritesheet
+    "healthpoints": ...,
+    "deck": [...],  # list of card IDs as strings
+    "chip_reward": ...,
+    "start_dialogue": "...",
+    "end_dialogue": "...",
+}
+Key is encounter from enum!

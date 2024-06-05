@@ -1,0 +1,32 @@
+== Card Customization ==
+[ X ] Card Name
+[ X ] Card Art
+[ X ] Card Description
+[ X ] Card Value
+[ X ] Card Attributes
+[ X ] Card Keywords
+[   ] Card Collection Order
+
+== Effect Triggers ==
+[ X ] On Play Effects
+[ X ] On Click Effects
+[ X ] On Bust Effects
+[ X ] On Stand Effects
+[ X ] On Start of Turn Effects (KINDA QUIRKY WITH MULTIPLE WAIT_FORS IT APPEARS)
+[   ] On Sleeve Played Effects
+[ ? ] On Another Card Drawn Effects
+[   ] On Card Instanced Effects
+
+== Effect Results ==
+[ X ] Gain Chips
+[ X ] Choice
+[ X ] Change Card Value
+[ X ] Change Card Suit
+[ X ] Move Card
+[ X ] Deal Damage
+[ X ] Change Bust Limit
+[   ] ...
+
+== Special ==
+[   ] Reference Other Cards
+[   ] Cancel wait_for (useful for if/else)

@@ -1,0 +1,9 @@
+relics/relic_effect_(id).tres:
+[gd_resource type="Resource" load_steps=2 format=2]
+
+[ext_resource path="res://relics/RelicEffect(id).gd" type="Script" id=1]
+
+[resource]
+script = ExtResource( 1 )
+
+relics/RelicEffect(id).gd:
