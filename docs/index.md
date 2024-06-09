@@ -34,7 +34,7 @@ dndgmod init
       ```
       dndgmod create
       ```
-2. Edit the mod files... (NOTE TO FUTURE SETH: ADD DOCS FOR THIS PART)
+2. Edit the mod files... Here are the docs: https://docs.google.com/document/d/1LKXtTyZchio7B-XRmeaSFV9jk7oYMQoV6p4m0zurUyg
 3. [Recompile *Dungeons & Degenerate Gamblers*](#recompile-dungeons-degenerate-gamblers)
 
 ### Recompile *Dungeons & Degenerate Gamblers*
