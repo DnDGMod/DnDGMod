@@ -3,6 +3,7 @@ from .util.logger import logger_setup, LogLevels
 
 from pathlib import Path
 from typing import Annotated
+from importlib import resources
 
 import appdirs
 import typer
@@ -17,7 +18,7 @@ app = typer.Typer(
     rich_markup_mode="rich",
     no_args_is_help=True
 )
-app.command(epilog=EPILOG)(init.init)
+# app.command(epilog=EPILOG)(init.init)
 app.command(epilog=EPILOG)(decompile.decompile)
 app.command(epilog=EPILOG)(create.create)
 app.command("open", epilog=EPILOG)(open.open_)
@@ -39,11 +40,15 @@ def dndgmod_callback(
     Check out our documentation at [link=https://dndgmod.rtfd.io]dndgmod.rtfd.io[/] for help getting started!
     """
     data_directory = Path(appdirs.user_data_dir("DnDGMod", "TotallyNotSeth")).resolve()
-    if not (data_directory.exists() or ctx.invoked_subcommand == "init"):
-        raise FileNotFoundError(f"Directory {data_directory} doesn't exist! Try running `dndgmod init`")
+    if not data_directory.exists():
+        data_directory.mkdir(parents=True)
+        (data_directory / "mods").mkdir()
+        (data_directory / "src").mkdir()
+        (data_directory / "modified_src").mkdir()
 
     ctx.ensure_object(dict)
     ctx.obj["data_directory"] = data_directory
+    ctx.obj["dependencies_directory"] = resources.files() / "dependencies"
     logger_setup(ctx, log_level)
 
 
