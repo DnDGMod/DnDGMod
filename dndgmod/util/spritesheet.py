@@ -5,7 +5,7 @@ import jinja2
 import re
 
 class Spritesheet:
-    CARD_WIDTH, CARD_HEIGHT = 58, 90
+    CARD_WIDTH, CARD_HEIGHT = 57, 89
 
     def __init__(self, spritesheet_path: Path):
         self.spritesheet_path = spritesheet_path

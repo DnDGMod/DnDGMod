@@ -9,13 +9,13 @@
 ## Installation
 DnDGMod is available from [PyPI](https://pypi.org/project/dndgmod/) (Currently Windows-Only):
 ```
-pip install dndgmod
+py -m pip install dndgmod
 ```
 
 ## Quickstart
 ### Initialization
 Run this command to set up DnDGMod's `AppData` directory, install dependencies, and decompile your (locally stored) 
-*Dungeons and Degenerate Gamblers* executable using GDRE Tools:
+*Dungeons and Degenerate Gamblers* executable using [Godot RE Tools](https://github.com/bruvzg/gdsdecomp):
 ```
 dndgmod init
 ```
@@ -43,3 +43,12 @@ Run this command to recompile *Dungeons & Degenerate Gamblers* using Godot (whic
 ```
 dndgmod compile
 ```
+
+### Credits
+DnDGMod was created and developed by [TotallyNotSeth](https://github.com/TotallyNotSethP)
+
+Playtesting provided by [Rando](https://github.com/rando-idiot), [Maple](https://github.com/Maple29234), and Monkeys
+
+This project would not have been possible without the [Godot Engine](https://github.com/godotengine/godot/tree/master)
+and its many contributors, as well as [Godot RE Tools](https://github.com/bruvzg/gdsdecomp/tree/master) by 
+[bruvzg](https://github.com/bruvzg)

@@ -26,7 +26,6 @@ def patch(
         ctx: typer.Context,
 ):
     """Patch the decompiled source code with installed mods."""
-    card_number = FIRST_CARD - 1
     logger: logging.Logger = ctx.obj["logger"]
     data_directory: Path = ctx.obj["data_directory"]
     decompiled_src = data_directory / "decomped_src"
@@ -48,20 +47,26 @@ def patch(
 
         with open(mod / "cards.yaml") as f:
             cards = yaml.safe_load(f)
-        for name, card_data in cards.items():
-            card_number += 1
+        card_ids = {}
+        for i, (_, card_data) in enumerate(cards.items()):
+            if "identifier" in card_data:
+                card_ids[card_data["identifier"]] = i + FIRST_CARD
+        for i, (name, card_data) in cards.items():
+            card_number = i + FIRST_CARD
             card_data = clean_dict(card_data)
             events = []
 
-            for trigger, source in card_data["triggers"].items():
-                with open(mod / "src" / source) as f:
-                    template = f.read().replace("\n", "\n    ")
-                events.append((trigger, j2.from_string(template).render()))
-            on_event = builtin_templates.get_template("on_event.gd.j2").module.on_event
-            with open(effect_resources / f"CardEffect{card_number}.gd", "w") as f:
-                f.write(builtin_templates.get_template("CardEffectXXX.gd.j2").render(events=events, on_event=on_event))
-            with open(effect_resources / f"card_effect_{card_number}.tres", "w") as f:
-                f.write(builtin_templates.get_template("card_effect_XXX.tres.j2").render(id=card_number))
+            if "triggers" in card_data:
+                for trigger, source in card_data["triggers"].items():
+                    with open(mod / "src" / source) as f:
+                        template = f.read().replace("\n", "\n    ")
+                    events.append((trigger, j2.from_string(template).render()))
+                on_event = builtin_templates.get_template("on_event.gd.j2").module.on_event
+                with open(effect_resources / f"CardEffect{card_number}.gd", "w") as f:
+                    f.write(builtin_templates.get_template("CardEffectXXX.gd.j2")
+                            .render(events=events, on_event=on_event, card_ids=card_ids))
+                with open(effect_resources / f"card_effect_{card_number}.tres", "w") as f:
+                    f.write(builtin_templates.get_template("card_effect_XXX.tres.j2").render(id=card_number))
             with open(card_list) as f:
                 card_list_contents = f.read()
             with open(card_list, "w") as f:
@@ -69,7 +74,7 @@ def patch(
                          .render(name=name, value=card_data["value"], suit=card_data.get("suit", "special"),
                                  id=card_number, description=card_data["description"],
                                  attributes=card_data.get("attributes", ["REWARD"]),
-                                 collection_entry=42000 + card_number,
+                                 collection_entry=42000 + card_number, flexible=card_data.get("flexible", None),
                                  keywords=card_data.get("keywords", None)))
                 card_list_contents = "},\n}".join(card_list_contents.rsplit("}\n}", 1))
                 card_list_contents = entry.join(card_list_contents.rsplit("}", 1))
