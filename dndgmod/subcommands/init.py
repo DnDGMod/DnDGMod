@@ -6,6 +6,7 @@ from zipfile import ZipFile
 
 import typer
 
+
 def init(
         ctx: typer.Context,
         godot_url: Annotated[str, typer.Option(

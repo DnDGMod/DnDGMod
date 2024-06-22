@@ -19,7 +19,7 @@ def compile_(
     shutil.copy(pck_path, data_directory / "DnDG_Backup.pck")
     shutil.copy(exe_path, data_directory / "DnDG_Backup.exe")
 
-    godot_path = data_directory / "dependencies" / "Godot_v3.5.3-stable_win64.exe"
+    godot_path = data_directory / "dependencies" / "godot.exe"
     input_directory = data_directory / "decomped_src"
     subprocess.run([godot_path, "--no-window", "--path", input_directory,
                     "--export" + ("-debug"*debug), "dndgmod", exe_path])
