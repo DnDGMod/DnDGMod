@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dndgmod"
-version = "0.3.4"
+version = "0.4.1"
 description = "A Dungeons & Degenerate Gamblers Modloader"
 authors = ["Seth Peace <sethevanpeace@gmail.com>"]
 readme = "README.md"

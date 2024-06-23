@@ -35,7 +35,8 @@ def patch(
     data_directory: Path = ctx.obj["data_directory"]
     vanilla_src = data_directory / "src"
     modified_src = data_directory / "modified_src"
-    shutil.rmtree(modified_src)
+    if modified_src.exists():
+        shutil.rmtree(modified_src)
     shutil.copytree(vanilla_src, modified_src)
 
     effect_resources = modified_src / "card_effect_resources"
@@ -60,7 +61,7 @@ def patch(
         for i, (_, card_data) in enumerate(cards.items()):
             if "identifier" in card_data:
                 card_ids[card_data["identifier"]] = i + FIRST_CARD
-        for i, (name, card_data) in cards.items():
+        for i, (name, card_data) in enumerate(cards.items()):
             card_number = i + FIRST_CARD
             card_data = clean_dict(card_data)
             events = []

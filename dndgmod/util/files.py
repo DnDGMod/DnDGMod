@@ -2,10 +2,14 @@ import re
 from pathlib import Path
 import os
 import shutil
+import winreg
 
 
 def find_dndg() -> Path:
-    with open("C:/Program Files (x86)/Steam/steamapps/libraryfolders.vdf") as f:
+    if not (library_folders := Path("C:/Program Files (x86)/Steam/steamapps/libraryfolders.vdf")).exists():
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\Valve\\Steam")
+        library_folders = Path(winreg.QueryValueEx(key, "InstallPath")[0]) / "steamapps" / "libraryfolders.vdf"
+    with open(library_folders) as f:
         matches = re.finditer("\"path\"\t\t\"(.*?)\"", f.read())
     for match in matches:
         library = (Path(match.groups()[0]) / "steamapps" / "common").resolve(strict=True)
