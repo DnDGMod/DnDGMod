@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import shutil
 
+
 def find_dndg() -> Path:
     with open("C:/Program Files (x86)/Steam/steamapps/libraryfolders.vdf") as f:
         matches = re.finditer("\"path\"\t\t\"(.*?)\"", f.read())
@@ -14,6 +15,7 @@ def find_dndg() -> Path:
     else:
         raise FileNotFoundError("Dungeons & Degenerate Gamblers could not be found. "
                                 "Make sure it's installed via Steam!")
+
 
 def nuke_directory(folder: Path):
     for filename in os.listdir(folder):

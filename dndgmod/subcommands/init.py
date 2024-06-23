@@ -10,7 +10,7 @@ import typer
 def init(
         ctx: typer.Context,
 ):
-    """Initialize DnDGMod and install dependencies.
+    """Initialize DnDGMod and install _dependencies.
 
     This will automatically download Godot 3.5.3 and GDRE Tools 0.6.2 to the DnDGMod AppData directory."""
     logger = ctx.obj["logger"]

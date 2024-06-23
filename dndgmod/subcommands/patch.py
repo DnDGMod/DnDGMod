@@ -1,17 +1,21 @@
 import logging
 import os
 from pathlib import Path
+import shutil
 
 import jinja2
 import yaml
 import typer
 
 from ..util.spritesheet import Spritesheet
+from ..util import files
 
 FIRST_CARD = 274
 
+
 class InvalidConfigurationError(Exception):
     pass
+
 
 def clean_dict(dictionary):
     to_return = dict()
@@ -22,22 +26,27 @@ def clean_dict(dictionary):
         to_return[key] = value
     return to_return
 
+
 def patch(
         ctx: typer.Context,
 ):
     """Patch the decompiled source code with installed mods."""
     logger: logging.Logger = ctx.obj["logger"]
     data_directory: Path = ctx.obj["data_directory"]
-    decompiled_src = data_directory / "decomped_src"
-    effect_resources = decompiled_src / "card_effect_resources"
-    card_list = decompiled_src / "singletons" / "CardList.gd"
+    vanilla_src = data_directory / "src"
+    modified_src = data_directory / "modified_src"
+    shutil.rmtree(modified_src)
+    shutil.copytree(vanilla_src, modified_src)
+
+    effect_resources = modified_src / "card_effect_resources"
+    card_list = modified_src / "singletons" / "CardList.gd"
     mods = (Path(f.path).resolve(strict=True) for f in os.scandir(data_directory / "mods") if f.is_dir())
     builtin_templates = jinja2.Environment(loader=jinja2.PackageLoader("dndgmod", "templates"))
-    ss = Spritesheet(decompiled_src / "assets" / "art" / "card_sprite_sheet.png")
+    ss = Spritesheet(modified_src / "assets" / "art" / "card_sprite_sheet.png")
 
     for mod in mods:
         j2 = jinja2.Environment(loader=jinja2.BaseLoader())
-        j2.globals["wait_for"] = builtin_templates.get_template("wait_for.gd.j2").module.wait_for
+        j2.globals["wait_for"] = builtin_templates.get_template("wait_for.gd.j2").module.wait_for  # type: ignore
 
         with open(mod / "mod.yaml") as f:
             metadata = clean_dict(yaml.safe_load(f))
@@ -61,7 +70,7 @@ def patch(
                     with open(mod / "src" / source) as f:
                         template = f.read().replace("\n", "\n    ")
                     events.append((trigger, j2.from_string(template).render()))
-                on_event = builtin_templates.get_template("on_event.gd.j2").module.on_event
+                on_event = builtin_templates.get_template("on_event.gd.j2").module.on_event  # type: ignore
                 with open(effect_resources / f"CardEffect{card_number}.gd", "w") as f:
                     f.write(builtin_templates.get_template("CardEffectXXX.gd.j2")
                             .render(events=events, on_event=on_event, card_ids=card_ids))
@@ -82,4 +91,4 @@ def patch(
 
             ss.add_art(card_number, mod / "res" / card_data["image"])
     ss.update_spritesheet()
-    ss.update_tres(decompiled_src / "assets" / "art" / "card_art_sprite_frames.tres")
+    ss.update_tres(modified_src / "assets" / "art" / "card_art_sprite_frames.tres")

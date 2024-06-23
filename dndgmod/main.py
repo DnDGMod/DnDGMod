@@ -3,10 +3,11 @@ from .util.logger import logger_setup, LogLevels
 
 from pathlib import Path
 from typing import Annotated
-from importlib import resources
+from zipfile import ZipFile
 
 import appdirs
 import typer
+import boto3
 
 EPILOG = ("[orange1][bold]DnDGMod by TotallyNotSeth[/] | "
           "[italic]Docs: [link=https://dndgmod.rtfd.io]dndgmod.rtfd.io[/][/]")
@@ -44,11 +45,22 @@ def dndgmod_callback(
         data_directory.mkdir(parents=True)
         (data_directory / "mods").mkdir()
         (data_directory / "src").mkdir()
-        (data_directory / "modified_src").mkdir()
+
+    dependencies_directory = data_directory / "dependencies"
+    if not dependencies_directory.exists():
+        dependencies_directory.mkdir()
+        boto3.client("s3").download_file(
+            Filename=str(dependencies_directory / "tmp.zip"),
+            Bucket="dndgmod",
+            Key="dndgmod_dependencies.zip",
+        )
+        with ZipFile(dependencies_directory / "tmp.zip") as f:
+            f.extractall(dependencies_directory)
+        (dependencies_directory / "tmp.zip").unlink()
 
     ctx.ensure_object(dict)
     ctx.obj["data_directory"] = data_directory
-    ctx.obj["dependencies_directory"] = resources.files() / "dependencies"
+    ctx.obj["dependencies_directory"] = dependencies_directory
     logger_setup(ctx, log_level)
 
 
