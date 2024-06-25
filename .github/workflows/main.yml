@@ -1,0 +1,38 @@
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  build:
+    name: Build DnDGMod
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          dndgmod
+          poetry.lock
+          pyproject.toml
+    - name: Install Poetry
+      uses: knowsuchagency/poetry-install@v2
+      with:
+        create-virtualenv: true
+    - name: Install Poetry-PyInstaller-Plugin
+      run: poetry self add poetry-pyinstaller-plugin
+    - name: Build DnDGMod with Poetry
+      run: poetry build
+    - name: Archive Wheel Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheel-artifacts
+        path: |
+          dist
+          !dist/pyinstaller
+    - name: Archive Executable Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: executable-artifacts
+        path: |
+          dist/pyinstaller/win_amd64
+          !dist/pyinstaller/win_amd64/.specs
