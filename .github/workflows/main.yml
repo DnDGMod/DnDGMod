@@ -14,6 +14,9 @@ jobs:
           dndgmod
           poetry.lock
           pyproject.toml
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12.4'
     - name: Install Poetry
       run: python.exe -m pip install poetry
     - name: Install Poetry-PyInstaller-Plugin
