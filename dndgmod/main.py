@@ -13,7 +13,7 @@ import appdirs
 import typer
 import boto3
 
-EPILOG = ("[orange1][bold]DnDGMod v0.4.0 by TotallyNotSeth[/] | "
+EPILOG = ("[orange1][bold]DnDGMod v0.4.2 by TotallyNotSeth[/] | "
           "[italic]Docs: [link=https://dndgmod.rtfd.io]dndgmod.rtfd.io[/][/]")
 
 app = typer.Typer(

@@ -1,0 +1,2 @@
+Replace assets/font/font_sheet_3_5.png with spritesheet with all numbers
+Update singletons/Fonts.gd line 56 with all characters in new spritesheet

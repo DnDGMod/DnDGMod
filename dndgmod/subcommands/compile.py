@@ -26,3 +26,4 @@ def compile_(
     input_directory = data_directory / "modified_src"
     subprocess.run([godot_path, "--no-window", "--path", input_directory,
                     "--export" + ("-debug" * debug), "dndgmod", exe_path])
+    subprocess.run([find_dndg().parent / "DnDG_64.exe"])

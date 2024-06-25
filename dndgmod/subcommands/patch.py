@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 import shutil
+from importlib import resources
 
 import jinja2
 import yaml
@@ -44,6 +45,7 @@ def patch(
     mods = (Path(f.path).resolve(strict=True) for f in os.scandir(data_directory / "mods") if f.is_dir())
     builtin_templates = jinja2.Environment(loader=jinja2.PackageLoader("dndgmod", "templates"))
     ss = Spritesheet(modified_src / "assets" / "art" / "card_sprite_sheet.png")
+    card_number = last_card_number = FIRST_CARD - 1
 
     for mod in mods:
         j2 = jinja2.Environment(loader=jinja2.BaseLoader())
@@ -60,9 +62,9 @@ def patch(
         card_ids = {}
         for i, (_, card_data) in enumerate(cards.items()):
             if "identifier" in card_data:
-                card_ids[card_data["identifier"]] = i + FIRST_CARD
+                card_ids[card_data["identifier"]] = i + last_card_number + 1
         for i, (name, card_data) in enumerate(cards.items()):
-            card_number = i + FIRST_CARD
+            card_number = i + last_card_number + 1
             card_data = clean_dict(card_data)
             events = []
 
@@ -91,5 +93,14 @@ def patch(
                 f.write(card_list_contents + "\n}")
 
             ss.add_art(card_number, mod / "res" / card_data["image"])
+        last_card_number = card_number
     ss.update_spritesheet()
     ss.update_tres(modified_src / "assets" / "art" / "card_art_sprite_frames.tres")
+
+    with resources.as_file(resources.files() / ".." / "assets" / "new_font_sheet_3_5.png") as f:
+        shutil.copy(f, modified_src / "assets" / "fonts" / "font_sheet_3_5.png")
+    with open(modified_src / "singletons" / "Fonts.gd") as f:
+        font_file_contents = f.read()
+    with open(modified_src / "singletons" / "Fonts.gd", "w") as f:
+        f.write(font_file_contents.replace('''var three_five_chars = "012/"''',
+                                           '''var three_five_chars = "0123456789/"'''))
