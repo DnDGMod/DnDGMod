@@ -1,3 +1,4 @@
+import rich
 from botocore import UNSIGNED
 from botocore.config import Config
 
@@ -8,12 +9,11 @@ from pathlib import Path
 from typing import Annotated
 from zipfile import ZipFile
 import os
-
 import appdirs
 import typer
 import boto3
 
-EPILOG = ("[orange1][bold]DnDGMod v0.4.2 by TotallyNotSeth[/] | "
+EPILOG = (f"[orange1][bold]DnDGMod v0.4.3 by TotallyNotSeth[/] | "
           "[italic]Docs: [link=https://dndgmod.rtfd.io]dndgmod.rtfd.io[/][/]")
 
 app = typer.Typer(
@@ -35,6 +35,11 @@ app.command(epilog=EPILOG)(revert.revert)
 app.command(epilog=EPILOG)(upgrade.upgrade)
 
 
+@app.command(epilog=EPILOG)
+def version():
+    rich.print(EPILOG)
+
+
 @app.callback()
 def dndgmod_callback(
         ctx: typer.Context,
@@ -43,7 +48,7 @@ def dndgmod_callback(
     """
     [underline]DnDGMod: The Dungeons & Degenerate Gamblers Modloader[/]
 
-    Created by TotallyNotSeth in California with :heart:
+    Created by TotallyNotSeth in Tennessee with :heart:
     Check out our documentation at [link=https://dndgmod.rtfd.io]dndgmod.rtfd.io[/] for help getting started!
     """
     data_directory = Path(appdirs.user_data_dir("DnDGMod", "TotallyNotSeth")).resolve()
