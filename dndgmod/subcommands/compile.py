@@ -12,10 +12,12 @@ def compile_(
         ctx: typer.Context,
         debug: Annotated[bool, typer.Option(help="Compile the debug version of Dungeons and Degenerate Gamblers."
                                             )] = True,
+        launch_dndg: Annotated[bool, typer.Option(help="Launch Dungeons and Degenerate Gamblers after compilation."
+                                                  )] = True,
 ):
     """Compile Dungeons & Degenerate Gamblers with any installed mods."""
     patch(ctx)
-    nuke_directory(ctx.obj["godot_directory"] / "app_userdata" / "Dungeons & Degenerate Gamblers")
+    nuke_directory(ctx.obj["godot_directory"] / "app_userdata" / "Dungeons & Degenerate Gamblers" / "1")
 
     pck_path = find_dndg()
     exe_path = pck_path.parent / "DnDG_64.exe"
@@ -26,4 +28,5 @@ def compile_(
     input_directory = data_directory / "modified_src"
     subprocess.run([godot_path, "--no-window", "--path", input_directory,
                     "--export" + ("-debug" * debug), "dndgmod", exe_path])
-    subprocess.run([find_dndg().parent / "DnDG_64.exe"])
+    if launch_dndg:
+        subprocess.run([find_dndg().parent / "DnDG_64.exe"])
