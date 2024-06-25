@@ -15,13 +15,11 @@ jobs:
           poetry.lock
           pyproject.toml
     - name: Install Poetry
-      uses: knowsuchagency/poetry-install@v2
-      with:
-        create-virtualenv: true
+      run: python.exe -m pip install poetry
     - name: Install Poetry-PyInstaller-Plugin
-      run: poetry self add poetry-pyinstaller-plugin
+      run: python.exe -m poetry self add poetry-pyinstaller-plugin
     - name: Build DnDGMod with Poetry
-      run: poetry build
+      run: python.exe -m poetry build
     - name: Archive Wheel Artifacts
       uses: actions/upload-artifact@v4
       with:
