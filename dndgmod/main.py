@@ -2,7 +2,7 @@ import rich
 from botocore import UNSIGNED
 from botocore.config import Config
 
-from .subcommands import create, delete, open, init, decompile, compile, patch, revert, cycle, upgrade
+from .subcommands import create, delete, open, decompile, compile, revert, upgrade, package, unpackage
 from .util.logger import logger_setup, LogLevels
 
 from pathlib import Path
@@ -33,6 +33,8 @@ app.command(epilog=EPILOG)(delete.delete)
 app.command(epilog=EPILOG)(revert.revert)
 # app.command(epilog=EPILOG)(cycle.cycle)
 app.command(epilog=EPILOG)(upgrade.upgrade)
+app.command(epilog=EPILOG)(package.package)
+app.command(epilog=EPILOG)(unpackage.unpackage)
 
 
 @app.command(epilog=EPILOG)
