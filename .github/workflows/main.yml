@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-    - main
+    - master
 
 jobs:
   build:
@@ -14,25 +14,22 @@ jobs:
           dndgmod
           poetry.lock
           pyproject.toml
-    - name: Install Poetry
-      uses: knowsuchagency/poetry-install@v2
+    - uses: actions/setup-python@v5
       with:
-        create-virtualenv: true
+        python-version: '3.12.4'
+    - name: Install Poetry
+      run: python.exe -m pip install poetry
     - name: Install Poetry-PyInstaller-Plugin
-      run: poetry self add poetry-pyinstaller-plugin
+      run: python.exe -m poetry self add poetry-pyinstaller-plugin
     - name: Build DnDGMod with Poetry
-      run: poetry build
+      run: python.exe -m poetry build
     - name: Archive Wheel Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: wheel-artifacts
-        path: |
-          dist
-          !dist/pyinstaller
+        name: dndgmod-distribution-artifacts
+        path: dist
     - name: Archive Executable Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: executable-artifacts
-        path: |
-          dist/pyinstaller/win_amd64
-          !dist/pyinstaller/win_amd64/.specs
+        name: dndgmod-onefile-bundled
+        path: dist/pyinstaller/win_amd64/dndgmod-onefile-bundled.exe
