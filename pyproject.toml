@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dndgmod"
-version = "0.4.3"
+version = "0.4.4-post1"
 description = "A Dungeons & Degenerate Gamblers Modloader"
 authors = ["Seth Peace <sethevanpeace@gmail.com>"]
 readme = "README.md"
@@ -33,8 +33,8 @@ pyyaml = "^6.0.1"
 appdirs = "^1.4.4"
 #dexsave = {version = "^0.1.0", optional = true}
 jinja2 = "^3.1.3"
-pillow = "^10.3.0"
 boto3 = "^1.34.132"
+pregex = "^2.3.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -43,3 +43,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry-pyinstaller-plugin.scripts]
 dndgmod-onefile-bundled = {source = "pyinstaller_launcher.py", type = "onefile", bundle = true}
 dndgmod-onedir-bundled = {source = "pyinstaller_launcher.py", type = "onedir", bundle = true}
+
+[tool.poetry-pyinstaller-plugin.include]
+"dndgmod/templates/*" = "templates"
+"dndgmod/assets/*" = "assets"
