@@ -1,2 +1,2 @@
-from dndgmod.main import app
-app()
+from dndgmod_gui.__main__ import DnDGModGUIBridge
+DnDGModGUIBridge()

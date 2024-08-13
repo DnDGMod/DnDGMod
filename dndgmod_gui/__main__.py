@@ -1,20 +1,41 @@
+import functools
+import sys
+import threading
 import typing
+from pathlib import Path
 
 from .about_window import about_window
 
 from importlib import resources
 import tkinter as tk
+from tkinter import scrolledtext
 from tkinter import ttk
 from collections import namedtuple
 import webbrowser
 from ctypes import windll
+import logging
 
-from dndgmod.subcommands.compile import compile
+from dndgmod.subcommands.compile import compile_dndg
+from dndgmod.subcommands.revert import revert
+from dndgmod.subcommands.decompile import decompile
 
 Card = namedtuple("Card", "name description")
 Card_typehint = Card[str, str]
-Mod = namedtuple("Mod", "name version author cards")
-Mod_typehint = Mod[str, str, str, typing.Iterable[Card_typehint]]
+Deck = namedtuple("Deck", "name description")
+Decks_typehint = Deck[str, str]
+Mod = namedtuple("Mod", "name version author cards decks")
+Mod_typehint = Mod[str, str, str, typing.Iterable[Card_typehint], typing.Iterable[Decks_typehint]]
+
+threads = {}
+
+
+def new_thread(func):
+    @functools.wraps(func)
+    def new_func(*args, **kwargs):
+        threads[func.__name__] = threading.Thread(target=func, args=args, kwargs=kwargs)
+        threads[func.__name__].start()
+
+    return new_func
 
 
 class DnDGModGUILayout:
@@ -73,6 +94,8 @@ class DnDGModGUILayout:
         self.save_file_editor_tab = self.SaveFileEditorTab(self.main_notebook)
         self.main_notebook.add(self.save_file_editor_tab.frame, text="Save File Editor")
 
+        self.settings_window = self.SettingsWindow()
+
         self.app_header.pack()
         self.main_notebook.pack(expand=True, fill="both")
         self.root.rowconfigure(1, weight=1)
@@ -112,39 +135,45 @@ class DnDGModGUILayout:
                 self.frame = ttk.Frame(self.parent, padding=10)
 
                 self.active_mods_header = ttk.Label(self.frame, text="Active Mods", style="TreeHeader.TLabel")
-                self.active_mods_treeview = DnDGModGUILayout.generic_mod_treeview(
+                self.active_mods_treeview = DnDGModGUILayout.ModTreeview(
                     self.frame, [Mod("The Best Mod Ever", "1.1.0", "TotallyNotSeth",
                                      [Card("Really cool card", "On Play: is cool"),
-                                      Card("Cooler card", "On Play: is cooler")]
+                                      Card("Cooler card", "On Play: is cooler")], []
                                      )])
 
                 self.mod_swap_buttons = self.ModSwapButtons(self.frame)
 
                 self.inactive_mods_header = ttk.Label(self.frame, text="Inactive Mods", style="TreeHeader.TLabel")
-                self.inactive_mods_treeview = DnDGModGUILayout.generic_mod_treeview(
+                self.inactive_mods_treeview = DnDGModGUILayout.ModTreeview(
                     self.frame, [Mod("The Worst Mod Ever", "1.1.0", "TotallyNotSeth",
                                      [Card("Really lame card", "On Play: is lame"),
-                                      Card("Lamer card", "On Play: is lamer")]
+                                      Card("Lamer card", "On Play: is lamer")], []
                                      )])
 
                 self.active_mods_header.grid(row=0, column=0)
-                self.active_mods_treeview.grid(row=1, column=0, sticky=tk.N + tk.E + tk.S + tk.W)
+                self.active_mods_treeview.frame.grid(row=1, column=0, sticky=tk.N + tk.E + tk.S + tk.W)
                 self.mod_swap_buttons.frame.grid(row=1, column=1)
                 self.inactive_mods_header.grid(row=0, column=2)
-                self.inactive_mods_treeview.grid(row=1, column=2, sticky=tk.N + tk.E + tk.S + tk.W)
+                self.inactive_mods_treeview.frame.grid(row=1, column=2, sticky=tk.N + tk.E + tk.S + tk.W)
 
                 self.frame.rowconfigure(1, weight=1)
                 self.frame.columnconfigure((0, 2), weight=1)
 
             class ModSwapButtons:
                 def __init__(self, parent: ttk.Frame):
+                    if getattr(sys, 'frozen', False):
+                        # we are running in a bundle (i.e. Portable EXE)
+                        self.bundle_dir = Path(sys._MEIPASS)
+                    else:
+                        self.bundle_dir = Path(__file__).parent.parent
+
                     self.parent = parent
                     self.frame = ttk.Frame(self.parent, padding=10)
 
-                    self.left_icon = (tk.PhotoImage(file=str(resources.files("dndgmod_gui") / "lefticon.png"))
+                    self.left_icon = (tk.PhotoImage(file=str(self.bundle_dir / "assets" / "lefticon.png"))
                                       .subsample(15, 15))
                     self.left_button = ttk.Button(self.frame, image=self.left_icon)
-                    self.right_icon = (tk.PhotoImage(file=str(resources.files("dndgmod_gui") / "righticon.png"))
+                    self.right_icon = (tk.PhotoImage(file=str(self.bundle_dir / "assets" / "righticon.png"))
                                        .subsample(15, 15))
                     self.right_button = ttk.Button(self.frame, image=self.right_icon)
 
@@ -153,13 +182,19 @@ class DnDGModGUILayout:
 
         class ActionButtons:
             def __init__(self, parent: ttk.Frame):
+                if getattr(sys, 'frozen', False):
+                    # we are running in a bundle (i.e. Portable EXE)
+                    self.bundle_dir = Path(sys._MEIPASS)
+                else:
+                    self.bundle_dir = Path(__file__).parent.parent
+
                 self.parent = parent
                 self.frame = ttk.Frame(self.parent, padding=10)
 
-                self.revert_image = tk.PhotoImage(file=str(resources.files("dndgmod_gui") / "revert.png"))
+                self.revert_image = tk.PhotoImage(file=str(self.bundle_dir / "assets" / "revert.png"))
                 self.revert_button = ttk.Button(self.frame, text=" Revert D&DG to Vanilla", image=self.revert_image,
                                                 compound="left")
-                self.compile_image = tk.PhotoImage(file=str(resources.files("dndgmod_gui") / "compile.png"))
+                self.compile_image = tk.PhotoImage(file=str(self.bundle_dir / "assets" / "compile.png"))
                 self.compile_button = ttk.Button(self.frame, text=" Compile Modded D&DG", image=self.compile_image,
                                                  compound="left")
 
@@ -171,14 +206,16 @@ class DnDGModGUILayout:
             self.parent = parent
             self.frame = ttk.Frame(self.parent)
 
-            self.mod_treeview = DnDGModGUILayout.generic_mod_treeview(
+            self.mod_treeview = DnDGModGUILayout.ModTreeview(
                 self.frame, [Mod("The worst mod ever", "1.1.0", "TotallyNotSeth",
                                  [Card("Really lame card", "On Play: is not cool"),
-                                  Card("Lamer card", "On Play: is uncool")]
+                                  Card("Lamer card", "On Play: is uncool")],
+                                 [Deck("Booster Pack Deck", "5 x Booster Packs"),
+                                  Deck("Tarot Deck", "All Tarot Cards")]
                                  )])
             self.properties_panel = self.PropertiesPanel(self.frame)
 
-            self.mod_treeview.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=15, pady=15)
+            self.mod_treeview.frame.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=15, pady=15)
             self.properties_panel.notebook.grid(row=0, column=1, sticky=tk.N + tk.E + tk.S + tk.W)
 
             self.frame.rowconfigure(0, weight=1)
@@ -214,15 +251,19 @@ class DnDGModGUILayout:
                     self.metadata_subpanel = self.MetadataSubpanel(self.frame)
                     self.quick_actions_subpanel = self.QuickActionsSubpanel(self.frame)
 
-                    self.metadata_subpanel.frame.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=10, pady=5)
-                    self.quick_actions_subpanel.frame.grid(row=1, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=10, pady=5)
+                    self.metadata_subpanel.frame.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=10,
+                                                      pady=5)
+                    self.quick_actions_subpanel.frame.grid(row=1, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=10,
+                                                           pady=5)
 
                     self.frame.columnconfigure("all", weight=1)
+                    self.frame.rowconfigure("all", weight=1)
 
                 class MetadataSubpanel:
                     def __init__(self, parent: ttk.Frame):
                         self.parent = parent
-                        self.frame, self.inner_frame = DnDGModGUILayout.generic_subpanel(self.parent, "Mod Metadata")
+                        subpanel = DnDGModGUILayout.Subpanel(self.parent, "Mod Metadata")
+                        self.frame, self.inner_frame = subpanel.frame, subpanel.inner_frame
 
                         self.name_label = ttk.Label(self.inner_frame, text="Mod Name: ")
                         self.name_entry = ttk.Entry(self.inner_frame)
@@ -244,7 +285,8 @@ class DnDGModGUILayout:
                 class QuickActionsSubpanel:
                     def __init__(self, parent: ttk.Frame):
                         self.parent = parent
-                        self.frame, self.inner_frame = DnDGModGUILayout.generic_subpanel(self.parent, "Quick Actions")
+                        subpanel = DnDGModGUILayout.Subpanel(self.parent, "Quick Actions")
+                        self.frame, self.inner_frame = subpanel.frame, subpanel.inner_frame
 
                         self.demo_button = ttk.Button(self.inner_frame, text="Demo Button")
                         self.demo_button.grid(sticky=tk.W)
@@ -302,43 +344,110 @@ class DnDGModGUILayout:
                 self.menu.add_command(label="Buy Me A Coffee")
                 self.menu.add_command(label="Join the DnDGMod Discord")
 
-    @staticmethod
-    def generic_mod_treeview(frame: ttk.Frame, mods: typing.Iterable[Mod_typehint]):
-        inner_frame = ttk.Frame(frame)
-        mod_list = ttk.Treeview(inner_frame, columns=["description"])
-        mod_list.heading("#0", text="Name")
-        mod_list.heading("description", text="Description")
-        for mod in mods:
-            mod_entry = mod_list.insert("", 1, text=f"{mod.name} v{mod.version}",
-                                        values=[f"Author: {mod.author}"], open=True)
-            cards_subentry = mod_list.insert(mod_entry, 1, text="=== Cards ===", open=True)
-            for card in mod.cards:
-                mod_list.insert(cards_subentry, 1, text=card.name, values=[card.description])
-        scrollbar = ttk.Scrollbar(inner_frame, orient="vertical", command=mod_list.yview)
-        mod_list.configure(yscrollcommand=scrollbar.set)
+    class ModTreeview:
+        def __init__(self, parent: ttk.Frame, mods: typing.Iterable[Mod_typehint]):
+            self.frame = ttk.Frame(parent)
+            self.mod_list = ttk.Treeview(self.frame, columns=["description"])
+            self.mod_list.heading("#0", text="Name")
+            self.mod_list.heading("description", text="Description")
+            self.mod_list.tag_configure("create", font=("Segue UI", 8, "bold"))
+            for mod in mods:
+                mod_entry = self.mod_list.insert("", 1, text=f"{mod.name} v{mod.version}",
+                                                 values=[f"Author: {mod.author}"], open=True, tags=("mod",))
 
-        mod_list.bind("<ButtonRelease-1>", lambda e: print(mod_list.item(mod_list.focus())))
+                cards_subentry = self.mod_list.insert(mod_entry, 1, text="=== Cards ===", open=True,
+                                                      tags=("subheader",))
+                for card in mod.cards:
+                    self.mod_list.insert(cards_subentry, "end", text=card.name, values=[card.description],
+                                         tags=("card",))
+                self.mod_list.insert(cards_subentry, "end", text="+ Create New Card", tags=("card", "create"))
 
-        mod_list.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W)
-        scrollbar.grid(row=0, column=1, sticky=tk.N + tk.S)
-        inner_frame.rowconfigure(0, weight=1)
-        inner_frame.columnconfigure(0, weight=1)
-        return inner_frame
+                decks_subentry = self.mod_list.insert(mod_entry, 2, text="=== Decks ===", open=True,
+                                                      tags=("subheader",))
+                for deck in mod.decks:
+                    self.mod_list.insert(decks_subentry, "end", text=deck.name, values=[deck.description],
+                                         tags=("deck",))
+                self.mod_list.insert(decks_subentry, "end", text="+ Create New Deck", tags=("deck", "create"))
+            scrollbar = ttk.Scrollbar(self.frame, orient="vertical", command=self.mod_list.yview)
+            self.mod_list.configure(yscrollcommand=scrollbar.set)
 
-    @staticmethod
-    def generic_subpanel(frame: ttk.Frame, label: str):
-        inner_frame = ttk.LabelFrame(frame, text=label)
-        frame = ttk.Frame(inner_frame)
-        frame.grid(sticky=tk.N + tk.E + tk.S + tk.W, padx=15, pady=10)
-        frame.columnconfigure(1, weight=1)
-        inner_frame.rowconfigure(0, weight=1)
-        inner_frame.columnconfigure(0, weight=1)
-        return inner_frame, frame
+            self.mod_list.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W)
+            scrollbar.grid(row=0, column=1, sticky=tk.N + tk.S)
+            self.frame.rowconfigure(0, weight=1)
+            self.frame.columnconfigure(0, weight=1)
+
+    class Subpanel:
+        def __init__(self, parent: ttk.Frame, label: str):
+            self.frame = ttk.LabelFrame(parent, text=label)
+            self.inner_frame = ttk.Frame(self.frame)
+            self.inner_frame.grid(sticky=tk.N + tk.E + tk.S + tk.W, padx=15, pady=10)
+            self.inner_frame.columnconfigure(1, weight=1)
+            self.frame.rowconfigure(0, weight=1)
+            self.frame.columnconfigure(0, weight=1)
+
+    class TerminalWindow:
+        def __init__(self, action, root):
+            self.win = tk.Toplevel()
+            self.win.geometry(f"+{root.winfo_rootx()}+{root.winfo_rooty()}")
+            self.win.title(action)
+
+            self.header = ttk.Label(self.win, text=action, style="AboutWindowHeader.TLabel")
+            self.textbox = scrolledtext.ScrolledText(self.win, state="disabled")
+            self.textbox.bind("<1>", lambda e: self.textbox.focus_set())
+            self.autoscroll = tk.BooleanVar()
+            self.autoscroll.set(True)
+            self.autoscroll_checkbtn = ttk.Checkbutton(self.win, variable=self.autoscroll, text="Auto-Scroll")
+
+            self.header.grid(row=0, column=0)
+            self.textbox.grid(row=1, column=0, sticky=tk.N + tk.E + tk.S + tk.W)
+            self.autoscroll_checkbtn.grid(row=2, column=0, sticky=tk.W, pady=5, padx=5)
+
+            self.win.rowconfigure(1, weight=1)
+            self.win.columnconfigure(0, weight=1)
+
+        class TextHandler(logging.Handler):
+            # This class allows you to log to a Tkinter Text or ScrolledText widget
+            # Adapted from Moshe Kaplan: https://gist.github.com/moshekaplan/c425f861de7bbf28ef06
+
+            def __init__(self, textbox, autoscroll):
+                super().__init__()
+                self.textbox = textbox
+                self.autoscroll = autoscroll
+
+            def emit(self, record):
+                msg = self.format(record)
+
+                def append():
+                    self.textbox.configure(state='normal')
+                    if msg[-1] == "\n":
+                        self.textbox.insert(tk.END, msg)
+                    else:
+                        self.textbox.insert(tk.END, msg + "\n")
+                    self.textbox.configure(state='disabled')
+                    # Autoscroll to the bottom
+                    if self.autoscroll.get():
+                        self.textbox.yview(tk.END)
+
+                # This is necessary because we can't modify the Text from other threads
+                self.textbox.after(0, append)
+
+    class SettingsWindow:
+        def __init__(self):
+            self.win = None
+            self.debug_toggle = None
+            self.debug_state = tk.BooleanVar()
+
+        def spawn_window(self):
+            self.win = tk.Toplevel()
+            self.debug_toggle = ttk.Checkbutton(self.win, text="Terminal Debug Mode", variable=self.debug_state)
+            self.debug_toggle.grid()
 
 
 class DnDGModGUIBridge:
     def __init__(self):
         self.layout = DnDGModGUILayout()
+        self.terminal_win = None
+        self.logger = None
 
         help_cascade_menu = self.layout.menubar.help_cascade.menu
         help_cascade_menu.entryconfigure("About", command=lambda: about_window(self.layout.root))
@@ -347,7 +456,42 @@ class DnDGModGUIBridge:
         help_cascade_menu.entryconfigure("Join the DnDGMod Discord",
                                          command=lambda: webbrowser.open("https://discord.gg/yudTFrxUJB"))
 
+        self.layout.menubar.dndg_cascade.menu.entryconfigure("Decompile D&DG",
+                                                             command=lambda: self.start_task(
+                                                                 "Decompile D&DG",
+                                                                 lambda: decompile(self.logger)))
+
+        compile_tab_action_buttons = self.layout.compile_dndg_tab.action_buttons
+        compile_tab_action_buttons.compile_button.configure(
+            command=lambda: self.start_task("Compile D&DG", lambda: compile_dndg(self.logger, debug=True))
+        )
+        compile_tab_action_buttons.revert_button.configure(
+            command=lambda: self.start_task("Revert D&DG to Vanilla", lambda: revert(self.logger))
+        )
+
+        mod_list = self.layout.mod_editor_tab.mod_treeview.mod_list
+        mod_list.bind("<ButtonRelease-1>", self.switch_scenes)
+
         self.layout.mainloop()
+
+    @new_thread
+    def start_task(self, task_name: str, task: typing.Callable):
+        self.terminal_win = DnDGModGUILayout.TerminalWindow(task_name, self.layout.root)
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.handlers.clear()
+        self.logger.addHandler(self.terminal_win.TextHandler(self.terminal_win.textbox, self.terminal_win.autoscroll))
+        task()
+
+    def switch_scenes(self, _):
+        mod_list = self.layout.mod_editor_tab.mod_treeview.mod_list
+        properties_panel_nb = self.layout.mod_editor_tab.properties_panel.notebook
+        scene_mapping = {
+            'subheader': 0,
+            'mod': 1,
+            'card': 2,
+        }
+        properties_panel_nb.select(scene_mapping[mod_list.item(mod_list.focus())['tags'][0]])
 
 
 DnDGModGUIBridge()

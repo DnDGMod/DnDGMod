@@ -29,12 +29,14 @@ dndgmod = "dndgmod.main:app"
 [tool.poetry.dependencies]
 python = "^3.12"
 typer = {extras = ["all"], version = "^0.12.3"}
-pyyaml = "^6.0.1"
+pyyaml = "^6.0.2"
 appdirs = "^1.4.4"
 #dexsave = {version = "^0.1.0", optional = true}
 jinja2 = "^3.1.3"
-boto3 = "^1.34.132"
+boto3 = "^1.34.158"
 pregex = "^2.3.3"
+pillow = "^10.4.0"
+wget = "^3.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -47,3 +49,4 @@ dndgmod-onedir-bundled = {source = "pyinstaller_launcher.py", type = "onedir", b
 [tool.poetry-pyinstaller-plugin.include]
 "dndgmod/templates/*" = "templates"
 "dndgmod/assets/*" = "assets"
+"dndgmod_gui/assets/*" = "assets"
