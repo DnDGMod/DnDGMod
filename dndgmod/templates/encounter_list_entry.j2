@@ -1,0 +1,10 @@
+    {{ floor }}Rooms.ENCOUNTER_{{ name.upper() }}: {
+        "name": "{{ name }}",
+        "type": "opponent",
+        "sprite": {{ sprite_id }},
+        "healthpoints": {{ hp }},
+        "deck": [{% for card in deck %}"{{ card }}", {% endfor %}],
+        "chip_reward": {{ chips }},
+        "start_dialogue": "{{ start_dialogue }}",
+        "end_dialogue": "{{ end_dialogue }}",
+    },

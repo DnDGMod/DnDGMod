@@ -1,0 +1,10 @@
+{% macro _random_int(len) %}{% for n in range(len) %}{{ [0,1,2,3,4,5,6,7,8,9]|random }}{% endfor %}{%- endmacro %}
+{% macro wait_for(source, trigger) %}
+{%- set function_id = _random_int(10) -%}
+{%- set ARGUMENTS = {"choice_made": "_card, arr, i", "card_move_to_new_pile_completed": "_card"} -%}
+    {{ source }}.connect("{{ trigger }}", self, "_on_{{ trigger }}_{{ function_id }}")
+{{ caller() }}
+func _on_{{ trigger }}_{{ function_id }}({{ ARGUMENTS.get(trigger, "") }}):
+    {{ source }}.disconnect("{{ trigger }}", self, "_on_{{ trigger }}_{{ function_id }}")
+    {% if trigger == "choice_made" %}var choice = arr[i]{% endif %}
+{% endmacro %}

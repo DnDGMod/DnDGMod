@@ -1,0 +1,12 @@
+extends Resource
+{% for event, _ in events %}
+signal {{ event }}_effect_completed
+{% endfor %}
+var effects_list = [{% for event, _ in events %}
+    "{{ event }}_effect",{% endfor %}
+]
+var current_player
+var other_player
+var card
+var g = {}
+{% for event, body in events %}{{ on_event(event, body) }}{% endfor %}

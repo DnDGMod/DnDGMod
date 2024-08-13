@@ -1,0 +1,14 @@
+{{ other_sub_resources }}
+{% for id_, coordinates in art_meta %}
+[sub_resource type="AtlasTexture" id={{ id_ }}]
+atlas = ExtResource( 1 )
+region = Rect2( {{ coordinates[0] }}, {{ coordinates[1] }}, {{ CARD_WIDTH }}, {{ CARD_HEIGHT }} )
+
+{% endfor %}
+[resource]
+animations = [ {
+"frames": [{% for id_ in range(1, art_meta[-1][0]) %} SubResource( {{ id_ }} ),{% endfor %} SubResource( {{ art_meta[-1][0] }} ) ],
+"loop": true,
+"name": "default",
+"speed": 5.0
+} ]

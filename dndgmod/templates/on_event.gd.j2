@@ -1,0 +1,13 @@
+{% macro on_event(event, body) %}
+{% if event == "clicked" %}var can_be_clicked = true
+{% endif %}func enact_{{ event }}_effect({% if event not in ["another_card_drawn", "card_instanced"] %}cp, op, {% endif %}c):
+{% if event == "clicked" %}    can_be_clicked = false
+{% endif %}{% if event not in ["another_card_drawn", "card_instanced"] %}    current_player = cp
+    other_player = op
+{% endif %}    card = c
+    {{ body }}
+{% if event == "clicked" %}    can_be_clicked = true
+{% endif %}
+{% if event != "card_instanced" %}    emit_signal('{{ event }}_effect_completed'{% if event == "stand" %}, card{% endif %})
+{% endif %}
+{% endmacro %}

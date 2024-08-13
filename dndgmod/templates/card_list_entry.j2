@@ -1,0 +1,10 @@
+    "{{ id }}":{
+        "name": "{{ name }}",
+        "suit": "{{ suit }}",
+        "value": {{ value }},
+        "attributes": [{% for attribute in attributes %}{{ attribute.upper() }}, {% endfor %}],
+        "description": "{{ description }}",
+        "collection_order": {{ collection_entry }},{% if keywords %}
+        "keywords": [{% for keyword in keywords %}{{ '"{' }}{{ keyword.lower().replace(' ', '_') }}{{ '}", ' }}{% endfor %}],{% endif %}{% if flexible %}
+        "flexible": [true, {% for value in flexible %}{{ value }}, {% endfor %}],{% endif %}
+    },
