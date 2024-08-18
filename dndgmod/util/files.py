@@ -2,6 +2,7 @@ import logging
 
 import appdirs
 import wget
+import shutil
 
 import re
 from pathlib import Path
@@ -29,6 +30,7 @@ def get_dndg_pck_path() -> Path:
     for match in matches:
         library = (Path(match.groups()[0]) / "steamapps" / "common").resolve(strict=True)
         dndg_path = library / "Dungeons & Degenerate Gamblers" / "DnDG_64.pck"
+        print(dndg_path)
         if dndg_path.exists():
             return dndg_path
     else:
@@ -50,8 +52,18 @@ def get_appdata_directory(logger: logging.Logger = None) -> Path:
         (appdata_directory / "mods").mkdir()
         (appdata_directory / "src").mkdir()
     dependencies_directory = appdata_directory / "dependencies"
+    if not (appdata_directory / "prefs.yaml").exists():
+        logger.info("Upgrading to DnDGMod Lite Filesystem...")
+        shutil.rmtree(appdata_directory / "dependencies", ignore_errors=True)
+        shutil.rmtree(appdata_directory / "modified_src", ignore_errors=True)
+        shutil.rmtree(appdata_directory / "src", ignore_errors=True)
+        (appdata_directory / "DnDG_vanilla.pck").unlink(missing_ok=True)
+        (appdata_directory / "DnDG_vanilla.exe").unlink(missing_ok=True)
+        with open(appdata_directory / "prefs.yaml", "w") as f:
+            f.write("Version: 0.1.0-lite")
+        logger.info("Filesystem Upgrade Complete")
     if not dependencies_directory.exists():
-        logger.warning("This appears to be your first time running DnDGMod. Please hold while we grab a few "
+        logger.warning("This appears to be your first time running DnDGMod Lite. Please hold while we grab a few "
                        "dependencies.")
         logger.info("Creating dependency destination directory")
         dependencies_directory.mkdir()

@@ -1,12 +1,14 @@
 import functools
+import os
 import sys
 import threading
 import typing
 from pathlib import Path
 
+import yaml
+
 from .about_window import about_window
 
-from importlib import resources
 import tkinter as tk
 from tkinter import scrolledtext
 from tkinter import ttk
@@ -18,6 +20,8 @@ import logging
 from dndgmod.subcommands.compile import compile_dndg
 from dndgmod.subcommands.revert import revert
 from dndgmod.subcommands.decompile import decompile
+from dndgmod.util.files import get_appdata_directory
+from dndgmod.util.patch import Patcher
 
 Card = namedtuple("Card", "name description")
 Card_typehint = Card[str, str]
@@ -165,7 +169,7 @@ class DnDGModGUILayout:
                         # we are running in a bundle (i.e. Portable EXE)
                         self.bundle_dir = Path(sys._MEIPASS)
                     else:
-                        self.bundle_dir = Path(__file__).parent.parent
+                        self.bundle_dir = Path(__file__).parent
 
                     self.parent = parent
                     self.frame = ttk.Frame(self.parent, padding=10)
@@ -186,7 +190,7 @@ class DnDGModGUILayout:
                     # we are running in a bundle (i.e. Portable EXE)
                     self.bundle_dir = Path(sys._MEIPASS)
                 else:
-                    self.bundle_dir = Path(__file__).parent.parent
+                    self.bundle_dir = Path(__file__).parent
 
                 self.parent = parent
                 self.frame = ttk.Frame(self.parent, padding=10)
@@ -206,13 +210,22 @@ class DnDGModGUILayout:
             self.parent = parent
             self.frame = ttk.Frame(self.parent)
 
-            self.mod_treeview = DnDGModGUILayout.ModTreeview(
-                self.frame, [Mod("The worst mod ever", "1.1.0", "TotallyNotSeth",
-                                 [Card("Really lame card", "On Play: is not cool"),
-                                  Card("Lamer card", "On Play: is uncool")],
-                                 [Deck("Booster Pack Deck", "5 x Booster Packs"),
-                                  Deck("Tarot Deck", "All Tarot Cards")]
-                                 )])
+            self.mods = (Path(f.path) for f in os.scandir(get_appdata_directory() / "mods") if f.is_dir())
+            self.mod_tree = []
+            for mod in self.mods:
+                with open(mod / "mod.yaml") as f:
+                    metadata = Patcher.clean_dict(yaml.safe_load(f))
+                if "cards" not in metadata["exports"]:
+                    raise Exception("erm what the sigma where are the cards my dude")
+                with open(mod / "cards.yaml") as f:
+                    cards = yaml.safe_load(f)
+                card_entries = []
+                for name, card_data in cards.items():
+                    card_data = Patcher.clean_dict(card_data)
+                    card_entries.append(Card(name, card_data["description"]))
+                self.mod_tree.append(Mod(metadata["name"], metadata["version"], metadata["creator"], card_entries, []))
+
+            self.mod_treeview = DnDGModGUILayout.ModTreeview(self.frame, self.mod_tree)
             self.properties_panel = self.PropertiesPanel(self.frame)
 
             self.mod_treeview.frame.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=15, pady=15)
@@ -296,8 +309,38 @@ class DnDGModGUILayout:
                     self.parent = parent
                     self.frame = ttk.Frame(self.parent)
 
-                    self.test_label = ttk.Label(self.frame, text="Hi")
-                    self.test_label.grid()
+                    self.metadata_subpanel = self.MetadataSubpanel(self.frame, Card("PLACEHOLDER", "PLACEHOLDER"))
+                    self.metadata_subpanel.frame.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=10,
+                                                      pady=5)
+
+                    self.frame.columnconfigure("all", weight=1)
+                    self.frame.rowconfigure("all", weight=1)
+
+                class MetadataSubpanel:
+                    def __init__(self, parent: ttk.Frame, card: Card_typehint):
+                        self.parent = parent
+                        subpanel = DnDGModGUILayout.Subpanel(self.parent, "Card Metadata")
+                        self.frame, self.inner_frame = subpanel.frame, subpanel.inner_frame
+
+                        self.name_label = ttk.Label(self.inner_frame, text="Card Name: ")
+                        self.name_entry_var = tk.StringVar()
+                        self.name_entry = ttk.Entry(self.inner_frame, textvariable=self.name_entry_var)
+                        self.name_entry.insert(0, card.name)
+                        self.description_label = ttk.Label(self.inner_frame, text="Description: ")
+                        self.description_entry_var = tk.StringVar()
+                        self.description_entry = ttk.Entry(self.inner_frame, textvariable=self.description_entry_var)
+                        self.description_entry.insert(0, card.description)
+
+                        self.name_label.grid(row=0, column=0, sticky=tk.E, pady=1)
+                        self.name_entry.grid(row=0, column=1, sticky=tk.E + tk.W)
+                        self.description_label.grid(row=1, column=0, sticky=tk.E, pady=1)
+                        self.description_entry.grid(row=1, column=1, sticky=tk.E + tk.W)
+
+                    def update_entries(self, card: Card_typehint):
+                        self.name_entry.delete(0, tk.END)
+                        self.name_entry.insert(0, card.name)
+                        self.description_entry.delete(0, tk.END)
+                        self.description_entry.insert(0, card.description)
 
     class SaveFileEditorTab:
         def __init__(self, parent: ttk.Notebook):
@@ -472,6 +515,13 @@ class DnDGModGUIBridge:
         mod_list = self.layout.mod_editor_tab.mod_treeview.mod_list
         mod_list.bind("<ButtonRelease-1>", self.switch_scenes)
 
+        card_properties_panel = self.layout.mod_editor_tab.properties_panel.card_properties_panel
+        card_properties_panel.metadata_subpanel.name_entry_var.trace_add("write", self.update_card_name)
+        card_properties_panel.metadata_subpanel.description_entry_var.trace_add("write",
+                                                                                self.update_card_description)
+
+        self.appdata_directory = get_appdata_directory()
+
         self.layout.mainloop()
 
     @new_thread
@@ -491,7 +541,23 @@ class DnDGModGUIBridge:
             'mod': 1,
             'card': 2,
         }
-        properties_panel_nb.select(scene_mapping[mod_list.item(mod_list.focus())['tags'][0]])
+        item = mod_list.item(mod_list.focus())
+        selected_type = item['tags'][0]
+        if selected_type == 'card':
+            card_properties_panel = self.layout.mod_editor_tab.properties_panel.card_properties_panel
+            card_properties_panel.metadata_subpanel.update_entries(Card(item['text'], item['values'][0]))
+        properties_panel_nb.select(scene_mapping[selected_type])
+
+    def update_card_name(self, *_):
+        mod_list = self.layout.mod_editor_tab.mod_treeview.mod_list
+        card_properties_panel = self.layout.mod_editor_tab.properties_panel.card_properties_panel
+        mod_list.item(mod_list.focus(), text=card_properties_panel.metadata_subpanel.name_entry_var.get())
+
+    def update_card_description(self, *_):
+        mod_list = self.layout.mod_editor_tab.mod_treeview.mod_list
+        card_properties_panel = self.layout.mod_editor_tab.properties_panel.card_properties_panel
+        mod_list.item(mod_list.focus(), values=[card_properties_panel.metadata_subpanel.description_entry_var.get()])
 
 
-DnDGModGUIBridge()
+if __name__ == "__main__":
+    DnDGModGUIBridge()

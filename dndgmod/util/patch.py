@@ -12,7 +12,7 @@ from .spritesheet import CardSpritesheet
 from . import files
 from .. import exceptions
 
-FIRST_CARD = 311
+FIRST_CARD = 313
 VALID_TRIGGERS = ["play", "clicked", "bust_limit_exceeded", "stand", "start_of_turn", "sleeve_played",
                   "another_card_drawn", "card_instanced"]
 

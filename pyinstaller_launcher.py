@@ -1,2 +1,4 @@
-from dndgmod_gui.__main__ import DnDGModGUIBridge
-DnDGModGUIBridge()
+from dndgmod_gui.lite import DnDGModGUILayoutLite
+
+layout = DnDGModGUILayoutLite()
+layout.root.mainloop()

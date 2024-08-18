@@ -43,8 +43,8 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry-pyinstaller-plugin.scripts]
-dndgmod-onefile-bundled = {source = "pyinstaller_launcher.py", type = "onefile", bundle = true}
-dndgmod-onedir-bundled = {source = "pyinstaller_launcher.py", type = "onedir", bundle = true}
+dndgmod-onefile-bundled = {source = "pyinstaller_launcher.py", type = "onefile", bundle = true, windowed = true}
+#dndgmod-onedir-bundled = {source = "pyinstaller_launcher.py", type = "onedir", bundle = true, windowed = true}
 
 [tool.poetry-pyinstaller-plugin.include]
 "dndgmod/templates/*" = "templates"
