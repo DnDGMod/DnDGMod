@@ -63,4 +63,4 @@ Follow the steps for 'The Game is Still Modded When Clicking "Revert D&DG"' abov
  * Honorary Alpha Tester: HuyTheKiller
 
 ### Special Thanks To...
- * Purple Moss Collectors, the talented people at Yogscast Games, and everyone else who worked hard to make *Dungeons & Degenerate Gamblers*!
+ * Purple Moss Collectors, the talented people at Yogscast Games, and everyone else who worked hard to make *Dungeons & Degenerate Gamblers* a reality!
