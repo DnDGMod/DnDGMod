@@ -49,4 +49,3 @@ dndgmod-onefile-bundled = {source = "pyinstaller_launcher.py", type = "onefile",
 [tool.poetry-pyinstaller-plugin.include]
 "dndgmod/templates/*" = "templates"
 "dndgmod/assets/*" = "assets"
-"dndgmod_gui/assets/*" = "assets"

@@ -8,9 +8,10 @@ import logging
 import jinja2
 import yaml
 
-from .spritesheet import CardSpritesheet
+from .spritesheet import CardSpritesheet, OpponentSpritesheet
 from . import files
 from .. import exceptions
+from ..pregex import room_list
 
 FIRST_CARD = 313
 VALID_TRIGGERS = ["play", "clicked", "bust_limit_exceeded", "stand", "start_of_turn", "sleeve_played",
@@ -51,8 +52,11 @@ class Patcher:
 
         self.mods = (Path(f.path) for f in os.scandir(self.appdata_directory / "mods") if f.is_dir())
         self.logger.debug(f"Mods found: {self.mods}")
-        ss = CardSpritesheet(self.modified_src / "assets" / "art" / "card_sprite_sheet.png", self.builtin_templates)
+        card_spritesheet = CardSpritesheet(self.modified_src / "assets" / "art" / "card_sprite_sheet.png",
+                                           self.builtin_templates)
         card_number = last_card_number = FIRST_CARD - 1
+        opponent_spritesheet = OpponentSpritesheet(self.modified_src / "assets" / "art" / "portraits" /
+                                                   "spritesheet.png", self.builtin_templates)
 
         self.j2.globals["wait_for"] = self.builtin_templates.get_template("wait_for.gd.j2").module.wait_for  # type: ignore
 
@@ -60,9 +64,6 @@ class Patcher:
             with open(mod / "mod.yaml") as f:
                 metadata = self.clean_dict(yaml.safe_load(f))
             self.logger.info(f"Patching mod `{metadata["name"]}`")
-            if metadata["exports"] not in ([], ["cards"]):
-                raise exceptions.InvalidModYamlException(f"Mod `{metadata["name"]}` attempted exporting something "
-                                                         f"other than cards")
 
             if "cards" in metadata["exports"]:
                 self.logger.info(f"Patching cards from mod `{metadata["name"]}`")
@@ -81,15 +82,31 @@ class Patcher:
                     self.patch_card_list_entry(name=name, card_data=card_data, card_number=card_number)
                     try:
                         self.logger.debug(f"Patching card art for card `{name}`")
-                        ss.add_art(card_number, mod / "res" / card_data["image"])
+                        card_spritesheet.add_art(card_number, mod / "res" / card_data["image"])
                     except KeyError:
                         raise exceptions.InvalidCardsYamlException(f"Card `{name}` from mod `{metadata["name"]}` "
                                                                    f"is missing the `Image` property")
                 last_card_number = card_number
 
+            if "encounters" in metadata["exports"]:
+                self.logger.info(f"Patching encounters from mod `{metadata["name"]}`")
+                with open(mod / "encounters.yaml") as f:
+                    encounters = yaml.safe_load(f)
+                for sprite_id, (name, encounter_data) in enumerate(encounters.items(), 42000):
+                    encounter_data = self.clean_dict(encounter_data)
+                    self.logger.debug(f"Encounter `{name}` Data: {encounter_data}")
+                    self.create_encounter_files(name=name, encounter_data=encounter_data, sprite_id=sprite_id)
+                    self.logger.debug(f"Patching opponent portrait for encounter `{name}`")
+                    opponent_spritesheet.add_art(sprite_id, mod / "res" / encounter_data["sprite"])
+
         self.logger.info("Patching card spritesheet")
-        ss.update_spritesheet()
-        ss.update_tres(self.modified_src / "assets" / "art" / "card_art_sprite_frames.tres")
+        card_spritesheet.update_spritesheet()
+        card_spritesheet.update_tres(self.modified_src / "assets" / "art" / "card_art_sprite_frames.tres")
+
+        self.logger.info("Patching opponent spritesheet")
+        opponent_spritesheet.update_spritesheet()
+        opponent_spritesheet.update_tres(self.modified_src / "assets" / "art" / "portraits" /
+                                         "portrait_spriteframes.tres")
 
         self.logger.info("Updating bust limit font")
         self.update_bust_limit_font()
@@ -157,6 +174,34 @@ class Patcher:
             if "identifier" in card_data:
                 card_ids[card_data["identifier"]] = card_number
         return card_ids
+
+    def create_encounter_files(self, name, encounter_data, sprite_id):
+        hard = "difficulty" in encounter_data and encounter_data["difficulty"].lower().strip() == "hard"
+        room_list.add_encounter_to_room(room_list_file=self.modified_src / "singletons" / "RoomList.gd",
+                                        room_name=encounter_data["location"], encounter_name=name)
+        room_list.add_encounter_to_random_pool(room_list_file=self.modified_src / "singletons" / "RoomList.gd",
+                                               room_name=encounter_data["location"], encounter_name=name,
+                                               difficulty="hard" if hard else "easy")
+
+        room_list_file = self.modified_src / "singletons" / "RoomList.gd"
+        with open(room_list_file) as f:
+            room_list_contents = f.read()
+        with open(room_list_file, "w") as f:
+            room_list_entry = (self.builtin_templates.get_template("room_list_entry.j2")
+                               .render(room_name=encounter_data["location"], encounter_name=name, sprite_id=sprite_id,
+                                       healthpoints=encounter_data.get("healthpoints", 21), deck=encounter_data["deck"],
+                                       hard_deck=encounter_data.get("hard_deck", None),
+                                       foils=encounter_data.get("foils", None),
+                                       hard_foils=encounter_data.get("hard_foils", None),
+                                       modified_stand_point=encounter_data.get("modified_stand_point", None),
+                                       chip_reward=encounter_data["chip_reward"],
+                                       start_dialogue=encounter_data["start_dialogue"],
+                                       end_dialogue=encounter_data["end_dialogue"]))
+            room_list_contents = "},\n}".join(room_list_contents.rsplit("}\n}", 1))
+            room_list_contents = room_list_entry.join(room_list_contents.rsplit("}", 1))
+            f.write(room_list_contents + "\n}")
+
+
 
     @staticmethod
     def clean_dict(dictionary: dict):
