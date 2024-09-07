@@ -70,6 +70,28 @@ class CardSpritesheet(Spritesheet):
             f.write(new_tres)
 
 
+class OpponentSpritesheet(Spritesheet):
+    OPPONENT_WIDTH, OPPONENT_HEIGHT = 32, 32
+
+    def __init__(self, spritesheet_path: Path, jinja2_env: jinja2.Environment):
+        super().__init__(spritesheet_path, self.OPPONENT_WIDTH, self.OPPONENT_HEIGHT)
+        self.j2 = jinja2_env
+
+    def update_tres(self, tres_path: Path):
+        if len(self.art_meta) == 0:
+            return
+        with open(tres_path) as f:
+            tres = f.read()
+        tres = tres[:tres.find("[resource]") - 1]
+        new_tres = self.j2.get_template("opponent_art_sprite_frames.tres.j2").render(
+            other_sub_resources=tres, art_meta=self.art_meta, OPPONENT_WIDTH=self.sprite_width,
+            OPPONENT_HEIGHT=self.sprite_height
+        )
+        new_tres = re.sub(r"load_steps=\d+", f"load_steps={self.art_meta[-1][0] + 2}", new_tres)
+        with open(tres_path, "w") as f:
+            f.write(new_tres)
+
+
 if __name__ == "__main__":
     ss = Spritesheet(
         Path(r"C:\Users\sethe\AppData\Local\TotallyNotSeth\DnDGMod\decomped_src\assets\art\card_sprite_sheet.png")
