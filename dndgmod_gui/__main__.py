@@ -264,13 +264,13 @@ class DnDGModGUILayout:
                     self.metadata_subpanel = self.MetadataSubpanel(self.frame)
                     self.quick_actions_subpanel = self.QuickActionsSubpanel(self.frame)
 
-                    self.metadata_subpanel.frame.grid(row=0, column=0, sticky=tk.N + tk.E + tk.W, padx=10,
+                    self.metadata_subpanel.frame.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=10,
                                                       pady=5)
-                    self.quick_actions_subpanel.frame.grid(row=1, column=0, sticky=tk.N + tk.E + tk.W, padx=10,
+                    self.quick_actions_subpanel.frame.grid(row=1, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=10,
                                                            pady=5)
 
                     self.frame.columnconfigure("all", weight=1)
-                    # self.frame.rowconfigure("all", weight=1)
+                    self.frame.rowconfigure("all", weight=1)
 
                 class MetadataSubpanel:
                     def __init__(self, parent: ttk.Frame):
@@ -310,11 +310,11 @@ class DnDGModGUILayout:
                     self.frame = ttk.Frame(self.parent)
 
                     self.metadata_subpanel = self.MetadataSubpanel(self.frame, Card("PLACEHOLDER", "PLACEHOLDER"))
-                    self.metadata_subpanel.frame.grid(row=0, column=0, sticky=tk.N + tk.E + tk.W, padx=10,
+                    self.metadata_subpanel.frame.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W, padx=10,
                                                       pady=5)
 
                     self.frame.columnconfigure("all", weight=1)
-                    # self.frame.rowconfigure("all", weight=1)
+                    self.frame.rowconfigure("all", weight=1)
 
                 class MetadataSubpanel:
                     def __init__(self, parent: ttk.Frame, card: Card_typehint):
@@ -341,17 +341,6 @@ class DnDGModGUILayout:
                         self.name_entry.insert(0, card.name)
                         self.description_entry.delete(0, tk.END)
                         self.description_entry.insert(0, card.description)
-
-                class SourceCodeSubpanel:
-                    def __init__(self, parent: ttk.Frame):
-                        self.parent = parent
-                        subpanel = DnDGModGUILayout.Subpanel(self.parent, "Source Code")
-                        self.frame, self.inner_frame = subpanel.frame, subpanel.inner_frame
-
-                        self.source_code_textbox = scrolledtext.ScrolledText(self.inner_frame, wrap=tk.WORD)
-                        self.source_code_textbox.grid(row=0, column=0, sticky=tk.N + tk.E + tk.S + tk.W)
-                        self.inner_frame.rowconfigure(0, weight=1)
-                        self.inner_frame.columnconfigure(0, weight=1)
 
     class SaveFileEditorTab:
         def __init__(self, parent: ttk.Notebook):
@@ -556,13 +545,6 @@ class DnDGModGUIBridge:
         selected_type = item['tags'][0]
         if selected_type == 'card':
             card_properties_panel = self.layout.mod_editor_tab.properties_panel.card_properties_panel
-            if len(item['tags']) > 1 and item['tags'][1] == 'create':
-                parent = mod_list.parent(mod_list.focus())
-                index = len(mod_list.get_children(parent)) - 1
-                item_id = mod_list.insert(parent, index, text="New Card", values=("On X: ...",), tags=("card",))
-                mod_list.focus(item_id)
-                mod_list.selection_set(item_id)
-                item = mod_list.item(item_id)
             card_properties_panel.metadata_subpanel.update_entries(Card(item['text'], item['values'][0]))
         properties_panel_nb.select(scene_mapping[selected_type])
 

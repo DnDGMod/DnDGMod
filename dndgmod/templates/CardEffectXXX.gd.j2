@@ -2,8 +2,8 @@ extends Resource
 {% for event, _ in events %}
 signal {{ event }}_effect_completed
 {% endfor %}
-var effects_list = [{% for event, _ in events %}
-    "{{ event }}_effect",{% endfor %}
+var effects_list = [{% for event, _ in events %}{% if event != "discarded" %}
+    "{{ event }}_effect",{% endif %}{% endfor %}
 ]
 var current_player
 var other_player
