@@ -8,9 +8,10 @@ import logging
 import jinja2
 import yaml
 
-from .spritesheet import CardSpritesheet
+from .spritesheet import CardSpritesheet, OpponentSpritesheet
 from . import files
 from .. import exceptions
+from ..pregex import room_list
 
 FIRST_CARD = 313
 # new 'globals' needed
@@ -54,11 +55,14 @@ class Patcher:
 
         self.mods = (Path(f.path) for f in os.scandir(self.appdata_directory / "mods") if f.is_dir())
         self.logger.debug(f"Mods found: {self.mods}")
-        # sprite sheet and foil map
-        ss = CardSpritesheet(self.modified_src / "assets" / "art" / "card_sprite_sheet.png", self.builtin_templates)
+
         fm = CardSpritesheet(self.modified_src / "assets" / "art" / 'card_visual_effects' / 'foil_card_assets' / "card_foil_mapping.png", self.builtin_templates)
         card_number = last_card_number = FIRST_CARD - 1
         deck_number = last_deck_number = FIRST_DECK - 1
+        card_spritesheet = CardSpritesheet(self.modified_src / "assets" / "art" / "card_sprite_sheet.png",
+                                           self.builtin_templates)
+        opponent_spritesheet = OpponentSpritesheet(self.modified_src / "assets" / "art" / "portraits" /
+                                                   "spritesheet.png", self.builtin_templates)
 
         self.j2.globals["wait_for"] = self.builtin_templates.get_template("wait_for.gd.j2").module.wait_for  # type: ignore
 
@@ -92,7 +96,7 @@ class Patcher:
                     self.patch_card_list_entry(name=name, card_data=card_data, card_number=card_number)
                     try:
                         self.logger.debug(f"Patching card art for card `{name}`")
-                        ss.add_art(card_number, mod / "res" / card_data["image"])
+                        card_spritesheet.add_art(card_number, mod / "res" / card_data["image"])
                     except KeyError:
                         raise exceptions.InvalidCardsYamlException(f"Card `{name}` from mod `{metadata["name"]}` "
                                                                    f"is missing the `Image` property")
@@ -105,6 +109,7 @@ class Patcher:
                         f"using default foil map")
                         fm.add_art(card_number, self.bundle_dir / "assets" / "default_foil.png")
                 last_card_number = card_number
+
 
             # if exporting decks
             if "decks" in metadata["exports"]:
@@ -145,9 +150,26 @@ class Patcher:
                     self.logger.info(f'Patch applied to `{path}`')
                 last_patch = patch_index
 
+            if "encounters" in metadata["exports"]:
+                self.logger.info(f"Patching encounters from mod `{metadata["name"]}`")
+                with open(mod / "encounters.yaml") as f:
+                    encounters = yaml.safe_load(f)
+                for sprite_id, (name, encounter_data) in enumerate(encounters.items(), 42000):
+                    encounter_data = self.clean_dict(encounter_data)
+                    self.logger.debug(f"Encounter `{name}` Data: {encounter_data}")
+                    self.create_encounter_files(name=name, encounter_data=encounter_data, sprite_id=sprite_id)
+                    self.logger.debug(f"Patching opponent portrait for encounter `{name}`")
+                    opponent_spritesheet.add_art(sprite_id, mod / "res" / encounter_data["sprite"])
+
+
         self.logger.info("Patching card spritesheet")
-        ss.update_spritesheet()
-        ss.update_tres(self.modified_src / "assets" / "art" / "card_art_sprite_frames.tres")
+        card_spritesheet.update_spritesheet()
+        card_spritesheet.update_tres(self.modified_src / "assets" / "art" / "card_art_sprite_frames.tres")
+
+        self.logger.info("Patching opponent spritesheet")
+        opponent_spritesheet.update_spritesheet()
+        opponent_spritesheet.update_tres(self.modified_src / "assets" / "art" / "portraits" /
+                                         "portrait_spriteframes.tres")
 
         self.logger.info("Patching foil map")
         fm.update_spritesheet()
@@ -286,16 +308,33 @@ class Patcher:
                 card_ids[card_data["identifier"]] = card_number
         return card_ids
 
-    # to be honest im not entirely sure what this does
-    # but its used for card ids so im assuming its useful for deck ids
-    # please let me know if not
-    def get_deck_ids_dict(self, decks, last_deck_number):
-        deck_ids = {}
-        for deck_number, (_, deck_data) in enumerate(decks.items(), start=last_deck_number + 1):
-            deck_data = self.clean_dict(deck_data)
-            if "identifier" in deck_data:
-                deck_ids[deck_data["identifier"]] = deck_number
-        return deck_ids
+
+    def create_encounter_files(self, name, encounter_data, sprite_id):
+        hard = "difficulty" in encounter_data and encounter_data["difficulty"].lower().strip() == "hard"
+        room_list.add_encounter_to_room(room_list_file=self.modified_src / "singletons" / "RoomList.gd",
+                                        room_name=encounter_data["location"], encounter_name=name)
+        room_list.add_encounter_to_random_pool(room_list_file=self.modified_src / "singletons" / "RoomList.gd",
+                                               room_name=encounter_data["location"], encounter_name=name,
+                                               difficulty="hard" if hard else "easy")
+
+        room_list_file = self.modified_src / "singletons" / "RoomList.gd"
+        with open(room_list_file) as f:
+            room_list_contents = f.read()
+        with open(room_list_file, "w") as f:
+            room_list_entry = (self.builtin_templates.get_template("room_list_entry.j2")
+                               .render(room_name=encounter_data["location"], encounter_name=name, sprite_id=sprite_id,
+                                       healthpoints=encounter_data.get("healthpoints", 21), deck=encounter_data["deck"],
+                                       hard_deck=encounter_data.get("hard_deck", None),
+                                       foils=encounter_data.get("foils", None),
+                                       hard_foils=encounter_data.get("hard_foils", None),
+                                       modified_stand_point=encounter_data.get("modified_stand_point", None),
+                                       chip_reward=encounter_data["chip_reward"],
+                                       start_dialogue=encounter_data["start_dialogue"],
+                                       end_dialogue=encounter_data["end_dialogue"]))
+            room_list_contents = "},\n}".join(room_list_contents.rsplit("}\n}", 1))
+            room_list_contents = room_list_entry.join(room_list_contents.rsplit("}", 1))
+            f.write(room_list_contents + "\n}")
+
 
     @staticmethod
     def clean_dict(dictionary: dict):

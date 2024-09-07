@@ -1,6 +1,5 @@
 import logging
 
-import appdirs
 import wget
 import shutil
 
@@ -46,7 +45,7 @@ def get_appdata_directory(logger: logging.Logger = None) -> Path:
     if not logger:
         logger = logging
 
-    appdata_directory = Path(appdirs.user_data_dir("DnDGMod", "TotallyNotSeth"))
+    appdata_directory = Path(os.getenv("LOCALAPPDATA")) / "TotallyNotSeth" / "DnDGMod"
     if not appdata_directory.exists():
         appdata_directory.mkdir(parents=True)
         (appdata_directory / "mods").mkdir()
