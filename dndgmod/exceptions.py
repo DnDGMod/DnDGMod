@@ -16,3 +16,6 @@ class InvalidModYamlException(DnDGModException):
 
 class InvalidCardsYamlException(DnDGModException):
     """Raised when attempting to parse a cards.yaml file but something seems incorrect."""
+
+class InvalidTriggerYamlException(DnDGModException):
+    """Raised when attempting to patch an invalid trigger."""

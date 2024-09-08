@@ -18,18 +18,3 @@ Line 174 has the `room_dictionary.` Entries look like this:
     "end_dialogue": "...",
 }
 Key is encounter from enum!
-
-Tavern Order:
-- EVENT_TESTING_ROOM
-- START_OF_FLOOR
-- ENCOUNTER_BARTENDER
-- EVENT_RELIC_REWARD
--
--
--
--
--
--
-- ENCOUNTER_MANAGER
-- EVENT_FORTUNE_TELLER
-- EVENT_END_OF_FLOOR
