@@ -3,7 +3,6 @@ from pathlib import Path
 import shutil
 import logging
 
-from ..exceptions import InvalidDnDGModZIPPackageFormatException
 from ..util import files
 
 
