@@ -9,4 +9,4 @@
 
 ## Reporting a Vulnerability
 
-Please email sethevanpeace@gmail.com with any applicable information.
+Please click "Report a Vulnerability" in the Security tab above to report a vulnerability in this software.
