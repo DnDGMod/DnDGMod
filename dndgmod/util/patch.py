@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 import shutil
@@ -8,16 +7,15 @@ import logging
 import jinja2
 import yaml
 
-from .spritesheet import CardSpritesheet
-from . import files
-from .. import exceptions
+from .spritesheet import CardSpritesheet, OpponentSpritesheet
+from . import files, exceptions
+from ..pregex import room_list
 
 FIRST_CARD = 313
 # new 'globals' needed
 FIRST_DECK = 18
 VALID_TRIGGERS = ["play", "clicked", "bust_limit_exceeded", "stand", "start_of_turn", "sleeve_played", "another_card_drawn", "card_instanced", 'hit', 'discarded', 'click']
-VALID_EXPORTS = ['cards', 'decks']
-
+VALID_EXPORTS = ['cards', 'decks', 'encounters']
 
 class Patcher:
     def __init__(self, logger: logging.Logger = None):
@@ -53,29 +51,34 @@ class Patcher:
 
         self.mods = (Path(f.path) for f in os.scandir(self.appdata_directory / "mods") if f.is_dir())
         self.logger.debug(f"Mods found: {self.mods}")
-        self.logger.debug(f"BEN BEN BEN UES BON BENS NES NO")
         # sprite sheet and foil map
         ss = CardSpritesheet(self.modified_src / "assets" / "art" / "card_sprite_sheet.png", self.builtin_templates)
         fm = CardSpritesheet(self.modified_src / "assets" / "art" / 'card_visual_effects' / 'foil_card_assets' / "card_foil_mapping.png", self.builtin_templates)
+
         card_number = last_card_number = FIRST_CARD - 1
         deck_number = last_deck_number = FIRST_DECK - 1
 
-        self.j2.globals["wait_for"] = self.builtin_templates.get_template("wait_for.gd.j2").module.wait_for  # type: ignore
+        self.j2.globals["wait_for"] = self.builtin_templates.get_template(
+            "wait_for.gd.j2").module.wait_for  # type: ignore
 
         # patching for decks
-        self.patch_file('ChoiceUI.gd', 'macro_controller.player_starting_deck = starting_deck_string', ['for deck in DeckList.starting_deck_dictionary:','\tif card_choice.card_name == DeckList.starting_deck_dictionary[deck].name:','\t\tstarting_deck_string = deck'], 'before', True)
+
+        self.patch_file('ChoiceUI.gd', 'macro_controller.player_starting_deck = starting_deck_string',
+                        '''for deck in DeckList.starting_deck_dictionary:\n\t\t\tif card_choice.card_name == 
+                        DeckList.starting_deck_dictionary[deck].name:\n\t\t\t\tstarting_deck_string = deck''',
+                        'before', True)
 
         for mod in self.mods:
             with open(mod / "mod.yaml") as f:
                 metadata = self.clean_dict(yaml.safe_load(f))
-            # disabling mods easier
+
             if ('enabled' in metadata and metadata['enabled']) or not 'enabled' in metadata:
                 self.logger.info(f"Patching mod `{metadata["name"]}`")
                 # check all exports are valid
                 for export in metadata['exports']:
                     if export not in VALID_EXPORTS:
-                        raise exceptions.InvalidModYamlException(f"WARNING: Mod `{metadata["name"]}` attempted exporting something "
-                                                                f"other than {VALID_EXPORTS}")
+                        raise exceptions.InvalidModYamlException(f"Mod `{metadata["name"]}` attempted exporting something "
+                                                                 f"other than {VALID_EXPORTS}")
 
                 if "cards" in metadata["exports"]:
                     self.logger.info(f"Patching cards from mod `{metadata["name"]}`")
@@ -89,20 +92,22 @@ class Patcher:
                         if "triggers" in card_data:
                             self.logger.debug(f"Patching triggers for card `{name}`")
                             self.create_card_effect_files(mod=mod, card_number=card_number, card_ids=card_ids,
-                                                        card_data=card_data)
+                                                          card_data=card_data)
                         self.logger.debug(f"Patching card list for card `{name}`")
                         self.patch_card_list_entry(name=name, card_data=card_data, card_number=card_number)
                         try:
                             self.logger.debug(f"Patching card art for card `{name}`")
-                            ss.add_art(card_number, mod / "res" / card_data["image"])
+                            card_spritesheet.add_art(card_number, mod / "res" / card_data["image"])
                         except KeyError:
-                            self.logger.debug(f"WARNING: Card `{name}` from mod `{metadata["name"]}` is missing the `Image` property, using placeholder image")
-                            ss.add_art(card_number, self.bundle_dir / "assets" / "placeholder.png")
+                            raise exceptions.InvalidCardsYamlException(f"Card `{name}` from mod `{metadata["name"]}` "
+                                                                       f"is missing the `Image` property")
                         try:
                             self.logger.debug(f"Patching foil map for card `{name}`")
                             fm.add_art(card_number, mod / "res" / card_data["foil"])
                         except KeyError:
-                            self.logger.debug(f"WARNING: Card `{name}` from mod `{metadata["name"]}` is missing the `Foil` property, using default foil map")
+                            self.logger.debug(f"Card `{name}` from mod `{metadata["name"]}` "
+                                              f"is missing the `Foil` property "
+                                              f"using default foil map")
                             fm.add_art(card_number, self.bundle_dir / "assets" / "default_foil.png")
                     last_card_number = card_number
 
@@ -120,8 +125,17 @@ class Patcher:
                         self.logger.debug(f"Deck `{name}` (ID: {deck_number}) Data: {deck_data}")
                         self.patch_deck_list_entry(name=name, deck_data=deck_data, deck_number=deck_number)
                     last_deck_number = deck_number
-            else:
-                self.logger.info(f"Skipping mod `{metadata["name"]}`")
+
+                if "encounters" in metadata["exports"]:
+                    self.logger.info(f"Patching encounters from mod `{metadata["name"]}`")
+                    with open(mod / "encounters.yaml") as f:
+                        encounters = yaml.safe_load(f)
+                    for sprite_id, (name, encounter_data) in enumerate(encounters.items(), 42000):
+                        encounter_data = self.clean_dict(encounter_data)
+                        self.logger.debug(f"Encounter `{name}` Data: {encounter_data}")
+                        self.create_encounter_files(name=name, encounter_data=encounter_data, sprite_id=sprite_id)
+                        self.logger.debug(f"Patching opponent portrait for encounter `{name}`")
+                        opponent_spritesheet.add_art(sprite_id, mod / "res" / encounter_data["sprite"])
 
         self.logger.info("Patching card spritesheet")
         ss.update_spritesheet()
@@ -129,7 +143,8 @@ class Patcher:
 
         self.logger.info("Patching foil map")
         fm.update_spritesheet()
-        fm.update_tres(self.modified_src / "assets" / "art" / 'card_visual_effects' / 'foil_card_assets' / "FoilMapping.tres")
+        fm.update_tres(
+            self.modified_src / "assets" / "art" / 'card_visual_effects' / 'foil_card_assets' / "FoilMapping.tres")
 
         self.logger.info("Updating bust limit font")
         self.update_bust_limit_font()
@@ -157,7 +172,7 @@ class Patcher:
         patch_num = 0
         curr_index = 0
         patched = False
-        
+
         for line in file_contents:
             if line.strip('\t\n') == pattern and not patched:
                 indent = len(line) - len(line.strip('\t'))
@@ -171,14 +186,14 @@ class Patcher:
                         new_payload = new_payload + new_line + line + '\n'
                 else:
                     new_payload = new_line + payload + '\n'
-                
+
                 if position == 'at':
                     file_contents[curr_index] = new_payload
                 elif position == 'before':
-                    file_contents.insert(curr_index,new_payload)
+                    file_contents.insert(curr_index, new_payload)
                     patched = True
                 else:
-                    file_contents.insert(curr_index+1,new_payload)
+                    file_contents.insert(curr_index + 1, new_payload)
                     patched = True
             curr_index = curr_index + 1
 
@@ -209,13 +224,13 @@ class Patcher:
             entry = (self.builtin_templates.get_template("deck_list_entry.j2")
                      .render(name=name, cover_card_id=deck_data['cover_card_id'],
                              id=deck_number, description=deck_data["description"],
-                             deck_list = deck_data['deck_list']))
+                             deck_list=deck_data['deck_list']))
 
             # split the entry into a list of lines
             entry = entry.split('\n')
-            
+
             # new entry starts with the entire file minus one bracket to close off the table
-            new_entry = deck_list_contents[0:len(deck_list_contents)-1]
+            new_entry = deck_list_contents[0:len(deck_list_contents) - 1]
             # chuck a comma at the end of the prexisting deck table
             new_entry[-1] = '\t},\n'
 
@@ -278,16 +293,32 @@ class Patcher:
                 card_ids[card_data["identifier"]] = card_number
         return card_ids
 
-    # to be honest im not entirely sure what this does
-    # but its used for card ids so im assuming its useful for deck ids
-    # please let me know if not
-    def get_deck_ids_dict(self, decks, last_deck_number):
-        deck_ids = {}
-        for deck_number, (_, deck_data) in enumerate(decks.items(), start=last_deck_number + 1):
-            deck_data = self.clean_dict(deck_data)
-            if "identifier" in deck_data:
-                deck_ids[deck_data["identifier"]] = deck_number
-        return deck_ids
+
+    def create_encounter_files(self, name, encounter_data, sprite_id):
+        hard = "difficulty" in encounter_data and encounter_data["difficulty"].lower().strip() == "hard"
+        room_list.add_encounter_to_room(room_list_file=self.modified_src / "singletons" / "RoomList.gd",
+                                        room_name=encounter_data["location"], encounter_name=name)
+        room_list.add_encounter_to_random_pool(room_list_file=self.modified_src / "singletons" / "RoomList.gd",
+                                               room_name=encounter_data["location"], encounter_name=name,
+                                               difficulty="hard" if hard else "easy")
+
+        room_list_file = self.modified_src / "singletons" / "RoomList.gd"
+        with open(room_list_file) as f:
+            room_list_contents = f.read()
+        with open(room_list_file, "w") as f:
+            room_list_entry = (self.builtin_templates.get_template("room_list_entry.j2")
+                               .render(room_name=encounter_data["location"], encounter_name=name, sprite_id=sprite_id,
+                                       healthpoints=encounter_data.get("healthpoints", 21), deck=encounter_data["deck"],
+                                       hard_deck=encounter_data.get("hard_deck", None),
+                                       foils=encounter_data.get("foils", None),
+                                       hard_foils=encounter_data.get("hard_foils", None),
+                                       modified_stand_point=encounter_data.get("modified_stand_point", None),
+                                       chip_reward=encounter_data["chip_reward"],
+                                       start_dialogue=encounter_data["start_dialogue"],
+                                       end_dialogue=encounter_data["end_dialogue"]))
+            room_list_contents = "},\n}".join(room_list_contents.rsplit("}\n}", 1))
+            room_list_contents = room_list_entry.join(room_list_contents.rsplit("}", 1))
+            f.write(room_list_contents + "\n}")
 
     @staticmethod
     def clean_dict(dictionary: dict):

@@ -7,7 +7,7 @@ from pathlib import Path
 import os
 import subprocess
 
-from .__main__ import DnDGModGUILayout, new_thread
+from . import DnDGModGUILayout, new_thread
 
 from dndgmod.subcommands.compile import compile_dndg
 from dndgmod.subcommands.revert import revert
@@ -41,7 +41,8 @@ class DnDGModGUILayoutLite:
                                                                              lambda: self.select_zip_file()))
         self.load_mod_button.grid(sticky=tk.N + tk.E + tk.S + tk.W)
         self.open_mods_folder_button = ttk.Button(self.mod_tools_section, text="Open Mods Folder",
-                                                  command=lambda *_: os.system(f"explorer {get_appdata_directory() / 'mods'}"))
+                                                  command=lambda *_: os.system(
+                                                      f"explorer {get_appdata_directory() / 'mods'}"))
         self.open_mods_folder_button.grid(sticky=tk.N + tk.E + tk.S + tk.W)
         self.mod_tools_section.grid(sticky=tk.N + tk.E + tk.S + tk.W, padx=10, pady=2)
         self.mod_tools_section.rowconfigure("all", weight=1)
@@ -72,7 +73,7 @@ class DnDGModGUILayoutLite:
         self.dndgmod_section.rowconfigure("all", weight=1)
         self.dndgmod_section.columnconfigure("all", weight=1)
 
-        self.root.rowconfigure([1,2,3], weight=1)
+        self.root.rowconfigure([1, 2, 3], weight=1)
         self.root.columnconfigure("all", weight=1)
 
     @new_thread
