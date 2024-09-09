@@ -15,8 +15,8 @@ DnDGMod is a modloader for [Dungeons & Degenerate Gamblers](https://store.steamp
  * Windows 10/11
  * [Dungeons & Degenerate Gamblers](https://store.steampowered.com/app/2400510/Dungeons__Degenerate_Gamblers/)
 
-## Installation
- 1. Download [dndgmod-onefile-bundled.exe](https://github.com/TotallyNotSethP/DnDGMod/releases/tag/DnDGMod_Lite) and run it.
+## Installation2
+ 1. Download [dndgmod-onefile-bundled.exe](https://github.com/TotallyNotSethP/DnDGMod/releases/tag/0.2.0-rc2) and run it.
  2. Click "Decompile D&DG" to decompile the game's source code. The first run of this feature will take longer than usual because it will need to download some extra files from the internet. You'll only need to do this step whenever D&DG or DnDGMod updates.
 
 ## Usage
