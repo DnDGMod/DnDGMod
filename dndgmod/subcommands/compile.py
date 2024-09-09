@@ -31,7 +31,7 @@ def compile_dndg(logger: logging.Logger = None, clear_save_game: bool = True, de
                                 exe_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     with process.stdout:
         for line in iter(process.stdout.readline, b''):  # b'\n'-separated lines
-            logger.debug(line.decode("utf-8"))
+            logger.debug(line.decode("latin-1"))
     logger.info("\nCompile Complete")
     if launch_dndg:
         logger.info("\nLaunching D&DG")
@@ -39,6 +39,6 @@ def compile_dndg(logger: logging.Logger = None, clear_save_game: bool = True, de
             process = subprocess.Popen([exe_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             with process.stdout:
                 for line in iter(process.stdout.readline, b''):  # b'\n'-separated lines
-                    logger.debug(line.decode("utf-8"))
+                    logger.debug(line.decode("latin-1"))
         else:
             subprocess.Popen([files.get_steam_install_path() / "steam.exe", "steam://rungameid/2400510"])
