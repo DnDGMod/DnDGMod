@@ -267,6 +267,12 @@ class Patcher:
             if not trigger in VALID_TRIGGERS:
                 self.logger.debug(f"WARNING: Invalid trigger `{trigger}` not in {VALID_TRIGGERS}")
             else:
+                if type(source) is dict:
+                    arguments = source
+                    source = source["filename"]
+                    self.logger.debug(f"Arguments for trigger `{trigger}`: {arguments}")
+                else:
+                    arguments = {}
                 # we got backwards compat now no way
                 if trigger == 'click':
                     self.logger.debug(f"WARNING: Trigger `Clicked` preferred over `Click`")
@@ -278,7 +284,9 @@ class Patcher:
                     extra = '\n    card.connect("card_discarded", self, "_on_card_discarded", [card])'
                 with open(mod / "src" / source) as f:
                     template = f.read().replace("\n", "\n    ")
-                events.append((trigger, self.j2.from_string(template).render(card_ids=card_ids) + extra))
+                events.append((trigger, self.j2.from_string(template).render(card_ids=card_ids, **arguments) + extra))
+
+
         if not play_effect and discard_effect:
             events.append(('play', 'card.connect("card_discarded", self, "_on_card_discarded", [card])'))
         on_event = self.builtin_templates.get_template("on_event.gd.j2").module.on_event  # type: ignore
