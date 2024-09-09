@@ -9,7 +9,16 @@ import winreg
 import os
 from zipfile import ZipFile
 
-from ..exceptions import DnDGNotFoundException
+import yaml
+
+from dndgmod.util.exceptions import DnDGNotFoundException
+
+from dndgmod import __VERSION__
+
+
+def get_steam_install_path() -> Path:
+    key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\Valve\\Steam")
+    return Path(winreg.QueryValueEx(key, "InstallPath")[0])
 
 
 def get_dndg_pck_path() -> Path:
@@ -22,8 +31,7 @@ def get_dndg_pck_path() -> Path:
         The path to DnDG_64.pck
     """
     if not (library_folders := Path("C:/Program Files (x86)/Steam/steamapps/libraryfolders.vdf")).exists():
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\Valve\\Steam")
-        library_folders = Path(winreg.QueryValueEx(key, "InstallPath")[0]) / "steamapps" / "libraryfolders.vdf"
+        library_folders = get_steam_install_path() / "steamapps" / "libraryfolders.vdf"
     with open(library_folders) as f:
         matches = re.finditer("\"path\"\t\t\"(.*?)\"", f.read())
     for match in matches:
@@ -48,8 +56,8 @@ def get_appdata_directory(logger: logging.Logger = None) -> Path:
     appdata_directory = Path(os.getenv("LOCALAPPDATA")) / "TotallyNotSeth" / "DnDGMod"
     if not appdata_directory.exists():
         appdata_directory.mkdir(parents=True)
-        (appdata_directory / "mods").mkdir()
-        (appdata_directory / "src").mkdir()
+    (appdata_directory / "mods").mkdir(exist_ok=True)
+    (appdata_directory / "src").mkdir(exist_ok=True)
     dependencies_directory = appdata_directory / "dependencies"
     if not (appdata_directory / "prefs.yaml").exists():
         logger.info("Upgrading to DnDGMod Lite Filesystem...")
@@ -59,8 +67,13 @@ def get_appdata_directory(logger: logging.Logger = None) -> Path:
         (appdata_directory / "DnDG_vanilla.pck").unlink(missing_ok=True)
         (appdata_directory / "DnDG_vanilla.exe").unlink(missing_ok=True)
         with open(appdata_directory / "prefs.yaml", "w") as f:
-            f.write("Version: 0.1.0-lite")
+            f.write(f"Version: {__VERSION__}")
         logger.info("Filesystem Upgrade Complete")
+    with open(appdata_directory / "prefs.yaml") as f:
+        prefs = yaml.safe_load(f)
+    if prefs["Version"] != __VERSION__:
+        with open(appdata_directory / "prefs.yaml", "w") as f:
+            f.write(f"Version: {__VERSION__}")
     if not dependencies_directory.exists():
         logger.warning("This appears to be your first time running DnDGMod Lite. Please hold while we grab a few "
                        "dependencies.")

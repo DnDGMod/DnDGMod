@@ -35,7 +35,7 @@ def decompile(logger: logging.Logger = None):
                                 f"--output-dir={output_directory}"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     with process.stdout:
         for line in iter(process.stdout.readline, b''):  # b'\n'-separated lines
-            logger.debug(line.decode("utf-8"))
+            logger.debug(line.decode("latin-1"))
 
     logger.info("Grabbing export presets")
     shutil.copy(dependencies_directory / "export_presets.cfg", output_directory / "export_presets.cfg")

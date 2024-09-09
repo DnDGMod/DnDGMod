@@ -2,13 +2,15 @@ import tkinter as tk
 from tkinter import ttk
 import webbrowser
 
+from dndgmod import __VERSION__
+
 
 def about_window(root):
     win = tk.Toplevel()
     win.geometry(f"+{root.winfo_rootx()}+{root.winfo_rooty()}")
     win.resizable(False, False)
     frame = tk.Frame(win)
-    ttk.Label(frame, text="DnDGMod GUI v0.1.0", style="AboutWindowHeader.TLabel").pack()
+    ttk.Label(frame, text=f"DnDGMod GUI v{__VERSION__}", style="AboutWindowHeader.TLabel").pack()
     ttk.Label(frame, style="AboutWindow.TLabel").pack()
     ttk.Label(frame, text="Primary Developer — TotallyNotSeth", style="AboutWindow.TLabel").pack()
     dndgmod_link = ttk.Label(frame, text="Powered by the DnDGMod API", style="AboutWindowLink.TLabel", cursor="hand2")
