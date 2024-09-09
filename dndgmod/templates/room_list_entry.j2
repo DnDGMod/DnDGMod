@@ -3,8 +3,8 @@
         "type": "opponent",
         "sprite": {{ sprite_id }},
         "healthpoints": {{ healthpoints }},
-        "deck": [{% for card in deck %}"{{ "%(card)03d" | format(card=card) }}", {% endfor %}],{% if hard_deck %}
-        "hard_deck": [{% for card in hard_deck %}"{{ card }}", {% endfor %}],{% endif %}{% if foils %}
+        "deck": [{% for card in deck %}{% if card | int != 0 %}"{{ "%03d" % card }}"{% else %}"{{ "%03d" % card_ids[card] }}"{% endif %}, {% endfor %}],{% if hard_deck %}
+        "hard_deck": [{% for card in hard_deck %}{% if card | int != 0 %}"{{ "%03d" % card }}"{% else %}"{{ "%03d" % card_ids[card] }}"{% endif %}, {% endfor %}],{% endif %}{% if foils %}
         "foils": [{% for foil in foils %}{{ foil }}, {% endfor %}],{% endif %}{% if hard_foils %}
         "hard_foils": [{% for foil in hard_foils %}{{ foil }}, {% endfor %}],{% endif %}{% if modified_stand_point %}
         "modified_stand_point": {{ modified_stand_point }},{% endif %}

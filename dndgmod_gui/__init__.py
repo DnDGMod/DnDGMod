@@ -34,6 +34,8 @@ threads = {}
 
 
 def new_thread(func):
+
+
     @functools.wraps(func)
     def new_func(*args, **kwargs):
         threads[func.__name__] = threading.Thread(target=func, args=args, kwargs=kwargs)

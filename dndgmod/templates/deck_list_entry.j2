@@ -1,6 +1,6 @@
     "{{ id }}":{
         "name": "{{ name }}",
         "description": "{{ description }}",
-        "cover_card_id": "{{ cover_card_id }}",
-        "deck_list": {{ deck_list }},
+        "cover_card_id": {% if cover_card_id | int != 0 %}"{{ "%03d" % cover_card_id }}"{% else %}"{{ "%03d" % card_ids[cover_card_id] }}"{% endif %},
+        "deck_list": [{% for card in deck_list %}{% if card | int != 0 %}"{{ "%03d" % card }}"{% else %}"{{ "%03d" % card_ids[card] }}"{% endif %}, {% endfor %}],
     },
