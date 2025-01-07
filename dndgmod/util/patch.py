@@ -54,13 +54,13 @@ class Patcher:
         self.mods = (Path(f.path) for f in os.scandir(self.appdata_directory / "mods") if f.is_dir())
         self.logger.debug(f"Mods found: {self.mods}")
 
-        fm = CardSpritesheet(
-            self.modified_src / "assets" / "art" / 'card_visual_effects' / 'foil_card_assets' / "card_foil_mapping.png",
-            self.builtin_templates)
+        # fm = CardSpritesheet(
+        #     self.modified_src / "assets" / "art" / 'card_visual_effects' / 'foil_card_assets' / "card_foil_mapping.png",
+        #     self.builtin_templates)
         card_number = last_card_number = FIRST_CARD - 1
         deck_number = last_deck_number = FIRST_DECK - 1
-        card_spritesheet = CardSpritesheet(self.modified_src / "assets" / "art" / "card_sprite_sheet.png",
-                                           self.builtin_templates)
+        # card_spritesheet = CardSpritesheet(self.modified_src / "assets" / "art" / "card_sprite_sheet.png",
+        #                                    self.builtin_templates)
         opponent_spritesheet = OpponentSpritesheet(self.modified_src / "assets" / "art" / "portraits" /
                                                    "spritesheet.png", self.builtin_templates)
 
@@ -102,20 +102,43 @@ class Patcher:
                         self.patch_card_list_entry(name=name, card_data=card_data, card_number=card_number)
                         try:
                             self.logger.debug(f"Patching card art for card `{name}`")
-                            card_spritesheet.add_art(card_number, mod / "res" / card_data["image"])
+                            shutil.copy(mod / "res" / card_data["image"],
+                                self.modified_src / "assets" / "art" / "card_art" / f"{card_number}.png")
+                            with open(self.modified_src / "assets" / "art" / "card_art" / f"{card_number}.png.import", "w") as f:
+                                f.write(self.builtin_templates.get_template("card_art.png.import.j2").render(id=card_number))
+                            # card_spritesheet.add_art(card_number, mod / "res" / card_data["image"])
                         except KeyError:
                             self.logger.debug(
                                 f"WARNING: Card `{name}` from mod `{metadata["name"]}` is missing the `Image` property, "
                                 f"using placeholder image")
-                            card_spritesheet.add_art(card_number, self.bundle_dir / "assets" / "placeholder.png")
+                            shutil.copy(self.bundle_dir / "assets" / "placeholder.png",
+                                self.modified_src / "assets" / "art" / "card_art" / f"{card_number}.png")
+                            with open(self.modified_src / "assets" / "art" / "card_art" / f"{card_number}.png.import", "w") as f:
+                                f.write(self.builtin_templates.get_template("card_art.png.import.j2").render(id=card_number))
+                            # card_spritesheet.add_art(card_number, self.bundle_dir / "assets" / "placeholder.png")
                         try:
                             self.logger.debug(f"Patching foil map for card `{name}`")
-                            fm.add_art(card_number, mod / "res" / card_data["foil"])
+                            shutil.copy(mod / "res" / card_data["foil"],
+                                        self.modified_src / "assets" / "art" / "card_visual_effects" /
+                                        "foil_card_assets" / "foil_mapping_frames" / f"{card_number}.png")
+                            with open(self.modified_src / "assets" / "art" / "card_visual_effects" /
+                                        "foil_card_assets" / "foil_mapping_frames" / f"{card_number}.png.import",
+                                      "w") as f:
+                                f.write(self.builtin_templates.get_template("card_art.png.import.j2").render(id=card_number))
+                            # fm.add_art(card_number, mod / "res" / card_data["foil"])
                         except KeyError:
                             self.logger.debug(f"Card `{name}` from mod `{metadata["name"]}` "
                                               f"is missing the `Foil` property "
                                               f"using default foil map")
-                            fm.add_art(card_number, self.bundle_dir / "assets" / "default_foil.png")
+                            shutil.copy(self.bundle_dir / "assets" / "default_foil.png",
+                                        self.modified_src / "assets" / "art" / "card_visual_effects" /
+                                        "foil_card_assets" / "foil_mapping_frames" / f"{card_number}.png")
+                            with open(self.modified_src / "assets" / "art" / "card_visual_effects" /
+                                        "foil_card_assets" / "foil_mapping_frames" / f"{card_number}.png.import",
+                                      "w") as f:
+                                f.write(self.builtin_templates.get_template("card_art.png.import.j2").render(
+                                    id=card_number))
+                            # fm.add_art(card_number, self.bundle_dir / "assets" / "default_foil.png")
                     last_card_number = card_number
 
                 # if exporting decks
@@ -146,19 +169,19 @@ class Patcher:
                         self.logger.debug(f"Patching opponent portrait for encounter `{name}`")
                         opponent_spritesheet.add_art(sprite_id, mod / "res" / encounter_data["sprite"])
 
-        self.logger.info("Patching card spritesheet")
-        card_spritesheet.update_spritesheet()
-        card_spritesheet.update_tres(self.modified_src / "assets" / "art" / "card_art_sprite_frames.tres")
+        # self.logger.info("Patching card spritesheet")
+        # card_spritesheet.update_spritesheet()
+        # card_spritesheet.update_tres(self.modified_src / "assets" / "art" / "card_art_sprite_frames.tres")
 
         self.logger.info("Patching opponent spritesheet")
         opponent_spritesheet.update_spritesheet()
         opponent_spritesheet.update_tres(self.modified_src / "assets" / "art" / "portraits" /
                                          "portrait_spriteframes.tres")
 
-        self.logger.info("Patching foil map")
-        fm.update_spritesheet()
-        fm.update_tres(
-            self.modified_src / "assets" / "art" / 'card_visual_effects' / 'foil_card_assets' / "FoilMapping.tres")
+        # self.logger.info("Patching foil map")
+        # fm.update_spritesheet()
+        # fm.update_tres(
+        #     self.modified_src / "assets" / "art" / 'card_visual_effects' / 'foil_card_assets' / "FoilMapping.tres")
 
         self.logger.info("Updating bust limit font")
         self.update_bust_limit_font()
