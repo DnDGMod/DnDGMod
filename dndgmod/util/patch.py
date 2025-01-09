@@ -173,6 +173,12 @@ class Patcher:
         # card_spritesheet.update_spritesheet()
         # card_spritesheet.update_tres(self.modified_src / "assets" / "art" / "card_art_sprite_frames.tres")
 
+        self.logger.info("Patching card art processor")
+        with open(self.modified_src / "singletons" / "CardArt.gd") as f:
+            card_art_contents = f.read()
+        with open(self.modified_src / "singletons" / "CardArt.gd", "w") as f:
+            f.write(card_art_contents.replace("for i in 312:", f"for i in {last_card_number}:"))
+
         self.logger.info("Patching opponent spritesheet")
         opponent_spritesheet.update_spritesheet()
         opponent_spritesheet.update_tres(self.modified_src / "assets" / "art" / "portraits" /

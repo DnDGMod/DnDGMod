@@ -12,10 +12,12 @@ from .about_window import about_window
 import tkinter as tk
 from tkinter import scrolledtext
 from tkinter import ttk
+from tkinter import messagebox
 from collections import namedtuple
 import webbrowser
 from ctypes import windll
 import logging
+import traceback
 
 from dndgmod.subcommands.compile import compile_dndg
 from dndgmod.subcommands.revert import revert
@@ -34,14 +36,19 @@ threads = {}
 
 
 def new_thread(func):
-
-
     @functools.wraps(func)
-    def new_func(*args, **kwargs):
-        threads[func.__name__] = threading.Thread(target=func, args=args, kwargs=kwargs)
-        threads[func.__name__].start()
+    def new_thread_func(*args, **kwargs):
+        threading.Thread(target=exception_handler(), args=args, kwargs=kwargs).start()
 
-    return new_func
+    def exception_handler():
+        def new_func(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except:
+                messagebox.showerror("Python Exception", traceback.format_exc())
+        return new_func
+
+    return new_thread_func
 
 
 class DnDGModGUILayout:

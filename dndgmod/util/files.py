@@ -59,9 +59,9 @@ def get_appdata_directory(logger: logging.Logger = None) -> Path:
     (appdata_directory / "mods").mkdir(exist_ok=True)
     (appdata_directory / "src").mkdir(exist_ok=True)
     dependencies_directory = appdata_directory / "dependencies"
-    if not (appdata_directory / "prefs.yaml").exists():
+    if not (appdata_directory / "prefs.yaml").exists(): # for users upgrading from a non-gui version
         logger.info("Upgrading to DnDGMod Lite Filesystem...")
-        shutil.rmtree(appdata_directory / "dependencies", ignore_errors=True)
+        shutil.rmtree(dependencies_directory, ignore_errors=True)
         shutil.rmtree(appdata_directory / "modified_src", ignore_errors=True)
         shutil.rmtree(appdata_directory / "src", ignore_errors=True)
         (appdata_directory / "DnDG_vanilla.pck").unlink(missing_ok=True)
@@ -72,11 +72,12 @@ def get_appdata_directory(logger: logging.Logger = None) -> Path:
     with open(appdata_directory / "prefs.yaml") as f:
         prefs = yaml.safe_load(f)
     if prefs["Version"] != __VERSION__:
+        logger.info("Updating dependencies...")
+        shutil.rmtree(dependencies_directory, ignore_errors=True)
         with open(appdata_directory / "prefs.yaml", "w") as f:
             f.write(f"Version: {__VERSION__}")
     if not dependencies_directory.exists():
-        logger.warning("This appears to be your first time running DnDGMod Lite. Please hold while we grab a few "
-                       "dependencies.")
+        logger.warning("Downloading new dependencies... this may take awhile")
         logger.info("Creating dependency destination directory")
         dependencies_directory.mkdir()
         logger.info("Downloading dependencies ZIP from S3 server")
