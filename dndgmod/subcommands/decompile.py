@@ -40,7 +40,7 @@ def decompile(logger: logging.Logger = None):
     logger.info("Grabbing export presets")
     shutil.copy(dependencies_directory / "export_presets.cfg", output_directory / "export_presets.cfg")
 
-    if not (templates_directory := files.get_godot_data_directory() / "templates" / "3.5.3.stable").exists():
+    if not (templates_directory := files.get_godot_data_directory() / "templates" / "3.6.stable").exists():
         logging.info("Grabbing export templates")
         templates_directory.mkdir(parents=True)
         for template in ["windows_32_debug.exe", "windows_64_debug.exe",
