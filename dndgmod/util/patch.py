@@ -274,16 +274,27 @@ class Patcher:
             # split the entry into a list of lines
             entry = entry.split('\n')
 
-            # new entry starts with the entire file minus one bracket to close off the table
-            new_entry = deck_list_contents[0:len(deck_list_contents) - 1]
+            # iterates through the decklist file and finds where the end of the dictionary is
+            splice_point = 0
+            for line in deck_list_contents:
+                if line == "}\n":
+                    break
+                splice_point += 1
+
+            # new entry starts with the entire file up till the end of the dictionary
+            new_entry = deck_list_contents[0:splice_point]
+            # new entry end stores all the lines after the dictionary ends
+            new_entry_end = deck_list_contents[splice_point:len(deck_list_contents)]
+              
             # chuck a comma at the end of the prexisting deck table
-            new_entry[-1] = '\t},\n'
+            new_entry[-1] = new_entry[-1].strip("\n") + ",\n"
 
             # append each line in the entry to the new entry, following the original decks
             for line in entry:
                 new_entry.append(line + '\n')
-            # add the closing bracket to the table
-            new_entry.append('}')
+            # add the code back from after the end of the dictionary
+            new_entry += new_entry_end
+          
             # then write the entire list of new lines to the file
             f.writelines(new_entry)
 
