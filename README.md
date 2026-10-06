@@ -1,6 +1,6 @@
 # DnDGMod: A Dungeons & Degenerate Gamblers Modloader
-![Python Version](https://img.shields.io/pypi/pyversions/dndgmod) ![Python Implementation](https://img.shields.io/pypi/implementation/dndgmod) ![Commit Activity](https://img.shields.io/github/commit-activity/m/TotallyNotSethP/DnDGMod) ![Downloads](https://img.shields.io/github/downloads/TotallyNotSethP/DnDGMod/total) ![https://img.shields.io/discord/1268924116434686038](https://img.shields.io/discord/1268924116434686038?link=https%3A%2F%2Fdsc.gg%2Fdndgmod
-)
+
+> ⚠️ DnDGMod is now deprecated and archived. Compatibility is not guaranteed and there is a 99% chance this software does not work anymore. Thank you for your interest in this software!
 
 DnDGMod is a modloader for [Dungeons & Degenerate Gamblers](https://store.steampowered.com/app/2400510/Dungeons__Degenerate_Gamblers/) created by [TotallyNotSeth](https://github.com/TotallyNotSethP)
 
